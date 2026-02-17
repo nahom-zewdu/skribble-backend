@@ -1,45 +1,65 @@
 // internal/room/room.go
-// This file defines the Room struct, which represents a game room in the Skribble backend. It includes fields for the room ID and a map of players in the room, along with methods to add and remove players.
+// This file defines the Room struct, which represents a game room in the Skribble backend.
+// It includes fields for the room ID, a map of connected clients, channels for registering and unregistering clients, and a channel for broadcasting messages to all clients in the room. The Room struct also has a method to run the main loop for handling client connections and messages.
 package room
 
 import (
-	"sync"
-
-	"github.com/nahom-zewdu/skribble-backend/internal/player"
+	"github.com/nahom-zewdu/skribble-backend/internal/client"
+	"github.com/nahom-zewdu/skribble-backend/internal/game"
 )
 
 type Room struct {
 	ID string
 
-	Players map[string]*player.Player
+	clients map[string]*client.Client
 
-	mu sync.RWMutex
+	register   chan *client.Client
+	unregister chan *client.Client
+	broadcast  chan []byte
+
+	game *game.Game
 }
 
 func NewRoom(id string) *Room {
-	return &Room{
-		ID:      id,
-		Players: make(map[string]*player.Player),
+	r := &Room{
+		ID:         id,
+		clients:    make(map[string]*client.Client),
+		register:   make(chan *client.Client),
+		unregister: make(chan *client.Client),
+		broadcast:  make(chan []byte),
+		game:       game.NewGame(),
 	}
+
+	go r.run()
+
+	return r
 }
 
-func (r *Room) AddPlayer(p *player.Player) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+func (r *Room) run() {
+	// Main loop to handle client registration, unregistration, and message broadcasting
+	for {
+		select {
 
-	r.Players[p.ID] = p
-}
+		case c := <-r.register:
+			r.clients[c.ID] = c
+			r.handleJoin(c)
 
-func (r *Room) RemovePlayer(playerID string) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
+		case c := <-r.unregister:
+			if _, ok := r.clients[c.ID]; ok {
+				delete(r.clients, c.ID)
+				close(c.Send)
+				r.handleLeave(c)
+			}
 
-	delete(r.Players, playerID)
-}
-
-func (r *Room) PlayerCount() int {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	return len(r.Players)
+		case message := <-r.broadcast:
+			for _, c := range r.clients {
+				select {
+				case c.Send <- message:
+				default:
+					close(c.Send)
+					delete(r.clients, c.ID)
+				}
+			}
+		}
+	}
 }
