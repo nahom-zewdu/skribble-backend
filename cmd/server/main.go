@@ -1,3 +1,6 @@
+// cmd/server/main.go
+// This is the entry point for the Skribble backend server. It loads the configuration, initializes the HTTP server, and starts it.
+
 package main
 
 import (
