@@ -1,6 +1,5 @@
 // internal/room/room.go
-// Manages game rooms, including player management and room state.
-// Each room can have multiple players, and the room struct provides methods to add and remove players, as well as to get the current player count.
+// This file defines the Room struct, which represents a game room in the Skribble backend. It includes fields for the room ID and a map of players in the room, along with methods to add and remove players.
 package room
 
 import (
