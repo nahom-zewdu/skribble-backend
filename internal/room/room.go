@@ -4,6 +4,7 @@
 package room
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
@@ -92,4 +93,13 @@ func (r *Room) handleLeave(c *client.Client) {
 		log.Println("Room empty:", r.ID)
 		// manager will clean this later
 	}
+}
+
+func (r *Room) broadcastSystem(msg string) {
+	// Broadcast a system message to all clients in the room
+	payload, _ := json.Marshal(map[string]interface{}{
+		"type": "system",
+		"data": msg,
+	})
+	r.broadcast <- payload
 }
