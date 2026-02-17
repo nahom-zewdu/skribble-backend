@@ -6,8 +6,8 @@ package main
 import (
 	"log"
 
-	"github.com/yourname/skribble-backend/internal/config"
-	"github.com/yourname/skribble-backend/internal/server"
+	"github.com/nahom-zewdu/skribble-backend/internal/config"
+	"github.com/nahom-zewdu/skribble-backend/internal/server"
 )
 
 func main() {
