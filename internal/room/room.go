@@ -4,6 +4,8 @@
 package room
 
 import (
+	"log"
+
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
 )
@@ -61,5 +63,18 @@ func (r *Room) run() {
 				}
 			}
 		}
+	}
+}
+
+func (r *Room) handleJoin(c *client.Client) {
+	// Handle a new client joining the room
+	log.Println("Player joined:", c.Name)
+
+	if len(r.clients) >= 2 && r.game.State == game.Waiting {
+		r.game.State = game.Playing
+		r.game.CurrentTurn = 1
+		r.broadcastSystem("Game started")
+	} else {
+		r.broadcastSystem("Waiting for players...")
 	}
 }
