@@ -78,3 +78,18 @@ func (r *Room) handleJoin(c *client.Client) {
 		r.broadcastSystem("Waiting for players...")
 	}
 }
+
+func (r *Room) handleLeave(c *client.Client) {
+	// Handle a client leaving the room
+	log.Println("Player left:", c.Name)
+
+	if len(r.clients) < 2 {
+		r.game.State = game.Paused
+		r.broadcastSystem("Game paused. Waiting for players...")
+	}
+
+	if len(r.clients) == 0 {
+		log.Println("Room empty:", r.ID)
+		// manager will clean this later
+	}
+}
