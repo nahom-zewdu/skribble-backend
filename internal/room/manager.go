@@ -1,11 +1,8 @@
 // internal/room/manager.go
-// This file defines the Manager struct, which is responsible for managing multiple game rooms in the Skribble backend. It provides methods to create, retrieve, and delete rooms.
-
+// This file defines the Manager struct, which is responsible for managing multiple game rooms in the Skribble backend.
 package room
 
-import (
-	"sync"
-)
+import "sync"
 
 type Manager struct {
 	rooms map[string]*Room
@@ -18,26 +15,15 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) CreateRoom(id string) *Room {
+func (m *Manager) GetOrCreateRoom(id string) *Room {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if room, ok := m.rooms[id]; ok {
+		return room
+	}
 
 	room := NewRoom(id)
 	m.rooms[id] = room
 	return room
-}
-
-func (m *Manager) GetRoom(id string) (*Room, bool) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	room, ok := m.rooms[id]
-	return room, ok
-}
-
-func (m *Manager) DeleteRoom(id string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	delete(m.rooms, id)
 }
