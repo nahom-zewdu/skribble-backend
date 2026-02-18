@@ -127,6 +127,34 @@ func (r *Room) onLeave(c *client.Client) {
 	}
 }
 
+// onMessage handles incoming client messages and routes them based on type.
+func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
+	var chat transport.ChatMessage
+
+	if err := json.Unmarshal(raw, &chat); err != nil {
+		log.Println("invalid chat payload:", err)
+		return
+	}
+
+	outgoing := transport.Message{
+		Type: "chat",
+		Data: map[string]interface{}{
+			"sender": sender.Name,
+			"text":   chat.Text,
+		},
+	}
+
+	payload, err := json.Marshal(outgoing)
+	if err != nil {
+		log.Println("marshal error:", err)
+		return
+	}
+
+	for _, c := range r.clients {
+		c.Send <- payload
+	}
+}
+
 // onMessage handles incoming client messages.
 func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	var incoming transport.ClientMessage
