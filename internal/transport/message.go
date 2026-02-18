@@ -3,7 +3,36 @@
 // It includes a Type field to indicate the type of message and a Data field to hold the message payload.
 package transport
 
+import "encoding/json"
+
+/*
+Message is the base envelope for all websocket communication.
+
+Every message MUST follow this structure.
+*/
 type Message struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
+}
+
+/*
+Incoming client message structure
+*/
+type ClientMessage struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"data"`
+}
+
+/*
+Chat message payload
+*/
+type ChatMessage struct {
+	Text string `json:"text"`
+}
+
+/*
+System message payload
+*/
+type SystemMessage struct {
+	Text string `json:"text"`
 }
