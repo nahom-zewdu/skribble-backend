@@ -10,6 +10,7 @@ import (
 
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
+	"github.com/nahom-zewdu/skribble-backend/internal/transport"
 )
 
 type Room struct {
@@ -127,16 +128,21 @@ func (r *Room) onLeave(c *client.Client) {
 }
 
 // onMessage handles incoming client messages.
-// For now: simple broadcast (chat prototype).
-func (r *Room) onMessage(sender *client.Client, msg []byte) {
-	for _, c := range r.clients {
-		select {
-		case c.Send <- msg:
-		default:
-			// Client write buffer full → treat as dead connection
-			close(c.Send)
-			delete(r.clients, c.ID)
-		}
+func (r *Room) onMessage(sender *client.Client, raw []byte) {
+	var incoming transport.ClientMessage
+
+	if err := json.Unmarshal(raw, &incoming); err != nil {
+		log.Println("invalid message format:", err)
+		return
+	}
+
+	switch incoming.Type {
+
+	case "chat":
+		r.handleChat(sender, incoming.Data)
+
+	default:
+		log.Println("unknown message type:", incoming.Type)
 	}
 }
 
