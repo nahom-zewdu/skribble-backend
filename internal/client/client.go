@@ -47,6 +47,9 @@ func (c *Client) ReadPump(onMessage func([]byte), onClose func()) {
 	}
 }
 
+// WritePump listens on the Send channel and writes messages to the WebSocket connection.
+// It should be run in a separate goroutine for each client.
+// If an error occurs while writing, it logs the error and breaks the loop, which will eventually lead to closing the connection.
 func (c *Client) WritePump() {
 	defer c.Conn.Close()
 
