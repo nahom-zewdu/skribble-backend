@@ -30,6 +30,9 @@ func NewClient(id, name string, conn *websocket.Conn) *Client {
 	}
 }
 
+// ReadPump listens for incoming messages from the WebSocket connection.
+// It takes two callback functions as parameters: onMessage, which is called with the message payload when a message is received, and onClose, which is called when the connection is closed.
+// The ReadPump runs in a loop, reading messages from the WebSocket connection. If an error occurs while reading (such as the connection being closed), it logs the error and breaks the loop, which will eventually lead to closing the connection.
 func (c *Client) ReadPump(onMessage func([]byte), onClose func()) {
 	defer func() {
 		onClose()
