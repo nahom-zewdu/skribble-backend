@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
+	"github.com/nahom-zewdu/skribble-backend/internal/pkg/utils"
 	"github.com/nahom-zewdu/skribble-backend/internal/room"
-	"github.com/nahom-zewdu/skribble-backend/pkg/utils"
 )
 
 var upgrader = websocket.Upgrader{
@@ -47,7 +47,7 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 
 	c.ReadPump(
 		func(message []byte) {
-			room.Broadcast(message)
+			room.HandleClientMessage(c, message)
 		},
 		func() {
 			room.Unregister(c)
