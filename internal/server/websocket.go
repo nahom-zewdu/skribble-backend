@@ -43,8 +43,10 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	room := roomManager.GetOrCreateRoom(roomID)
 	room.Register(c)
 
-	go c.WritePump()
+	go c.WritePump() // Start the write pump in a separate goroutine to handle outgoing messages
 
+	// Start the read pump in the current goroutine to handle incoming messages
+	// The read pump will call the provided onMessage and onClose callbacks
 	c.ReadPump(
 		func(message []byte) {
 			room.HandleClientMessage(c, message)
