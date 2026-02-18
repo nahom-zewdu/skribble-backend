@@ -177,10 +177,14 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 // Internal Utilities
 // broadcastSystem sends a system message to all clients.
 func (r *Room) broadcastSystem(message string) {
-	payload, err := json.Marshal(map[string]interface{}{
-		"type": "system",
-		"data": message,
-	})
+	outgoing := transport.Message{
+		Type: "system",
+		Data: transport.SystemMessage{
+			Text: message,
+		},
+	}
+
+	payload, err := json.Marshal(outgoing)
 	if err != nil {
 		log.Println("system message marshal error:", err)
 		return
