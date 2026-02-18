@@ -1,6 +1,7 @@
 // internal/room/room.go
 // This file defines the Room struct, which represents a game room in the Skribble backend.
-// It includes fields for the room ID, a map of connected clients, channels for registering and unregistering clients, and a channel for broadcasting messages to all clients in the room. The Room struct also has a method to run the main loop for handling client connections and messages.
+// It manages connected clients, handles incoming messages, and maintains the game state for that room.
+// The Room struct includes methods for registering and unregistering clients, handling client messages, and broadcasting system messages to all clients in the room.
 package room
 
 import (
@@ -14,22 +15,32 @@ import (
 type Room struct {
 	ID string
 
+	// Active connected clients in this room
 	clients map[string]*client.Client
 
+	// Internal event channels
 	register   chan *client.Client
 	unregister chan *client.Client
-	broadcast  chan []byte
+	incoming   chan clientMessage
 
+	// Game state (pure logic container for now)
 	game *game.Game
 }
 
+// Internal wrapper to preserve sender context
+type clientMessage struct {
+	client  *client.Client
+	message []byte
+}
+
+// NewRoom creates a room and starts its event loop.
 func NewRoom(id string) *Room {
 	r := &Room{
 		ID:         id,
 		clients:    make(map[string]*client.Client),
 		register:   make(chan *client.Client),
 		unregister: make(chan *client.Client),
-		broadcast:  make(chan []byte),
+		incoming:   make(chan clientMessage),
 		game:       game.NewGame(),
 	}
 
@@ -38,68 +49,110 @@ func NewRoom(id string) *Room {
 	return r
 }
 
+// Public API (ONLY THESE)
+// Register adds a client to the room.
+func (r *Room) Register(c *client.Client) {
+	r.register <- c
+}
+
+// Unregister removes a client from the room.
+func (r *Room) Unregister(c *client.Client) {
+	r.unregister <- c
+}
+
+// HandleClientMessage routes a message from a client into the room.
+func (r *Room) HandleClientMessage(c *client.Client, msg []byte) {
+	r.incoming <- clientMessage{
+		client:  c,
+		message: msg,
+	}
+}
+
+// Room Event Loop
+// run is the single authority over room state.
 func (r *Room) run() {
-	// Main loop to handle client registration, unregistration, and message broadcasting
 	for {
 		select {
 
 		case c := <-r.register:
 			r.clients[c.ID] = c
-			r.handleJoin(c)
+			r.onJoin(c)
 
 		case c := <-r.unregister:
 			if _, ok := r.clients[c.ID]; ok {
 				delete(r.clients, c.ID)
 				close(c.Send)
-				r.handleLeave(c)
+				r.onLeave(c)
 			}
 
-		case message := <-r.broadcast:
-			for _, c := range r.clients {
-				select {
-				case c.Send <- message:
-				default:
-					close(c.Send)
-					delete(r.clients, c.ID)
-				}
-			}
+		case msg := <-r.incoming:
+			r.onMessage(msg.client, msg.message)
 		}
 	}
 }
 
-func (r *Room) handleJoin(c *client.Client) {
-	// Handle a new client joining the room
+// Internal Handlers
+// onJoin handles logic when a player joins.
+func (r *Room) onJoin(c *client.Client) {
 	log.Println("Player joined:", c.Name)
 
+	r.broadcastSystem(c.Name + " joined the room")
+
+	// Auto-start when at least 2 players are present
 	if len(r.clients) >= 2 && r.game.State == game.Waiting {
 		r.game.State = game.Playing
 		r.game.CurrentTurn = 1
 		r.broadcastSystem("Game started")
-	} else {
+	} else if len(r.clients) < 2 {
 		r.broadcastSystem("Waiting for players...")
 	}
 }
 
-func (r *Room) handleLeave(c *client.Client) {
-	// Handle a client leaving the room
+// onLeave handles logic when a player disconnects.
+func (r *Room) onLeave(c *client.Client) {
 	log.Println("Player left:", c.Name)
 
+	r.broadcastSystem(c.Name + " left the room")
+
+	// Pause game if fewer than 2 players remain
 	if len(r.clients) < 2 {
 		r.game.State = game.Paused
 		r.broadcastSystem("Game paused. Waiting for players...")
 	}
 
+	// If empty, room manager may clean this later
 	if len(r.clients) == 0 {
 		log.Println("Room empty:", r.ID)
-		// manager will clean this later
 	}
 }
 
-func (r *Room) broadcastSystem(msg string) {
-	// Broadcast a system message to all clients in the room
-	payload, _ := json.Marshal(map[string]interface{}{
+// onMessage handles incoming client messages.
+// For now: simple broadcast (chat prototype).
+func (r *Room) onMessage(sender *client.Client, msg []byte) {
+	for _, c := range r.clients {
+		select {
+		case c.Send <- msg:
+		default:
+			// Client write buffer full → treat as dead connection
+			close(c.Send)
+			delete(r.clients, c.ID)
+		}
+	}
+}
+
+// Internal Utilities
+// broadcastSystem sends a system message to all clients.
+func (r *Room) broadcastSystem(message string) {
+	payload, err := json.Marshal(map[string]interface{}{
 		"type": "system",
-		"data": msg,
+		"data": message,
 	})
-	r.broadcast <- payload
+	if err != nil {
+		log.Println("system message marshal error:", err)
+		return
+	}
+
+	for _, c := range r.clients {
+		c.Send <- payload
+	}
 }
