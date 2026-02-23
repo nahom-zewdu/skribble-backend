@@ -102,7 +102,7 @@ func (r *Room) onJoin(c *client.Client) {
 	// Auto-start when at least 2 players are present
 	if len(r.clients) >= 2 && r.game.State == game.Waiting {
 		r.game.State = game.Playing
-		r.game.CurrentTurn = 1
+		r.game.CurrentTurn.Number = 1
 		r.broadcastSystem("Game started")
 	} else if len(r.clients) < 2 {
 		r.broadcastSystem("Waiting for players...")
