@@ -54,3 +54,14 @@ func (g *Game) startNextTurn() error {
 
 	return nil
 }
+
+// SetWord assigns the selected word to the current turn and starts the timer.
+func (g *Game) SetWord(word string) error {
+	if g.CurrentTurn == nil {
+		return errors.New("no active turn")
+	}
+
+	g.CurrentTurn.Word = word
+	g.CurrentTurn.StartTime = time.Now()
+	return nil
+}
