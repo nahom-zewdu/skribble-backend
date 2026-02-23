@@ -1,12 +1,13 @@
 // internal/room/room.go
-// This file defines the Room struct, which represents a game room in the Skribble backend.
-// It manages connected clients, handles incoming messages, and maintains the game state for that room.
-// The Room struct includes methods for registering and unregistering clients, handling client messages, and broadcasting system messages to all clients in the room.
+// This file defines the Room struct, which manages a single game room in the Skribble backend.
+// It handles client registration, message processing, and game state management for the room.
+// The Room struct interacts with the Game logic to manage turns, scoring, and player actions.
 package room
 
 import (
 	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
@@ -16,25 +17,20 @@ import (
 type Room struct {
 	ID string
 
-	// Active connected clients in this room
 	clients map[string]*client.Client
 
-	// Internal event channels
 	register   chan *client.Client
 	unregister chan *client.Client
 	incoming   chan clientMessage
 
-	// Game state (pure logic container for now)
 	game *game.Game
 }
 
-// Internal wrapper to preserve sender context
 type clientMessage struct {
 	client  *client.Client
 	message []byte
 }
 
-// NewRoom creates a room and starts its event loop.
 func NewRoom(id string) *Room {
 	r := &Room{
 		ID:         id,
@@ -46,43 +42,36 @@ func NewRoom(id string) *Room {
 	}
 
 	go r.run()
-
 	return r
 }
 
-// Public API (ONLY THESE)
-// Register adds a client to the room.
 func (r *Room) Register(c *client.Client) {
 	r.register <- c
 }
 
-// Unregister removes a client from the room.
 func (r *Room) Unregister(c *client.Client) {
 	r.unregister <- c
 }
 
-// HandleClientMessage routes a message from a client into the room.
 func (r *Room) HandleClientMessage(c *client.Client, msg []byte) {
-	r.incoming <- clientMessage{
-		client:  c,
-		message: msg,
-	}
+	r.incoming <- clientMessage{client: c, message: msg}
 }
 
-// Room Event Loop
-// run is the single authority over room state.
+// run is the main loop for the room, handling client registration, unregistration, and incoming messages.
 func (r *Room) run() {
 	for {
 		select {
 
 		case c := <-r.register:
 			r.clients[c.ID] = c
+			r.game.AddPlayer(c.ID, c.Name)
 			r.onJoin(c)
 
 		case c := <-r.unregister:
 			if _, ok := r.clients[c.ID]; ok {
 				delete(r.clients, c.ID)
 				close(c.Send)
+				r.game.RemovePlayer(c.ID)
 				r.onLeave(c)
 			}
 
@@ -95,72 +84,34 @@ func (r *Room) run() {
 // Internal Handlers
 // onJoin handles logic when a player joins.
 func (r *Room) onJoin(c *client.Client) {
-	log.Println("Player joined:", c.Name)
+	r.broadcastSystem(c.Name + " joined")
 
-	r.broadcastSystem(c.Name + " joined the room")
-
-	// Auto-start when at least 2 players are present
 	if len(r.clients) >= 2 && r.game.State == game.Waiting {
-		r.game.State = game.Playing
-		r.game.CurrentTurn.Number = 1
-		r.broadcastSystem("Game started")
-	} else if len(r.clients) < 2 {
-		r.broadcastSystem("Waiting for players...")
+		if err := r.game.Start(); err == nil {
+			r.startTurnBroadcast()
+		}
 	}
 }
 
 // onLeave handles logic when a player disconnects.
 func (r *Room) onLeave(c *client.Client) {
-	log.Println("Player left:", c.Name)
+	r.broadcastSystem(c.Name + " left")
 
-	r.broadcastSystem(c.Name + " left the room")
+	if r.game.CurrentTurn != nil && c.ID == r.game.CurrentTurn.DrawerID {
+		r.endTurn()
+	}
 
-	// Pause game if fewer than 2 players remain
 	if len(r.clients) < 2 {
 		r.game.State = game.Paused
-		r.broadcastSystem("Game paused. Waiting for players...")
-	}
-
-	// If empty, room manager may clean this later
-	if len(r.clients) == 0 {
-		log.Println("Room empty:", r.ID)
+		r.broadcastSystem("Game paused")
 	}
 }
 
-// onMessage handles incoming client messages and routes them based on type.
-func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
-	var chat transport.ChatMessage
-
-	if err := json.Unmarshal(raw, &chat); err != nil {
-		log.Println("invalid chat payload:", err)
-		return
-	}
-
-	outgoing := transport.Message{
-		Type: "chat",
-		Data: map[string]interface{}{
-			"sender": sender.Name,
-			"text":   chat.Text,
-		},
-	}
-
-	payload, err := json.Marshal(outgoing)
-	if err != nil {
-		log.Println("marshal error:", err)
-		return
-	}
-
-	for _, c := range r.clients {
-		c.Send <- payload
-	}
-}
-
-// onMessage handles incoming client messages.
+// onMessage processes incoming messages from clients and routes them to the appropriate handlers.
 func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	var incoming transport.ClientMessage
 
 	if err := json.Unmarshal(raw, &incoming); err != nil {
-		log.Println("invalid message format:", err)
 		return
 	}
 
@@ -168,29 +119,145 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 
 	case "chat":
 		r.handleChat(sender, incoming.Data)
-
-	default:
-		log.Println("unknown message type:", incoming.Type)
 	}
 }
 
-// Internal Utilities
-// broadcastSystem sends a system message to all clients.
-func (r *Room) broadcastSystem(message string) {
-	outgoing := transport.Message{
-		Type: "system",
-		Data: transport.SystemMessage{
-			Text: message,
+// handleChat processes chat messages and checks for correct guesses.
+func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
+	var chat transport.ChatMessage
+	if err := json.Unmarshal(raw, &chat); err != nil {
+		return
+	}
+
+	// Guess logic
+	if r.game.CurrentTurn != nil &&
+		strings.EqualFold(chat.Text, r.game.CurrentTurn.Word) {
+
+		correct, _ := r.game.Guess(sender.ID, chat.Text)
+		if correct {
+			r.broadcastCorrectGuess(sender.Name)
+
+			if r.allGuessed() {
+				r.endTurn()
+			}
+			return
+		}
+	}
+
+	// Normal chat broadcast
+	r.broadcastChat(sender.Name, chat.Text)
+}
+
+// Helper methods for broadcasting messages and managing game state
+func (r *Room) allGuessed() bool {
+	turn := r.game.CurrentTurn
+	if turn == nil {
+		return false
+	}
+
+	for _, p := range r.game.Players {
+		if p.ID == turn.DrawerID {
+			continue
+		}
+		if !turn.Guessed[p.ID] {
+			return false
+		}
+	}
+	return true
+}
+
+// endTurn ends the current turn and starts the next one, broadcasting updates to clients.
+func (r *Room) endTurn() {
+	if err := r.game.EndTurn(); err != nil {
+		r.broadcastSystem("Game ended")
+		return
+	}
+
+	r.broadcastSystem("Turn ended")
+	r.startTurnBroadcast()
+}
+
+// startTurnBroadcast sends a message to all clients indicating the start of a new turn and who the drawer is.
+func (r *Room) startTurnBroadcast() {
+	turn := r.game.CurrentTurn
+	if turn == nil {
+		return
+	}
+
+	r.broadcastSystem("Turn " + string(rune(turn.Number+'0')) + " started")
+
+	for _, c := range r.clients {
+		if c.ID == turn.DrawerID {
+			c.Send <- r.mustMarshal(transport.Message{
+				Type: "your_turn",
+				Data: map[string]interface{}{
+					"turn": turn.Number,
+				},
+			})
+		} else {
+			c.Send <- r.mustMarshal(transport.Message{
+				Type: "turn_started",
+				Data: map[string]interface{}{
+					"turn": turn.Number,
+				},
+			})
+		}
+	}
+}
+
+// broadcastChat sends a chat message from a player to all clients in the room.
+func (r *Room) broadcastChat(sender, text string) {
+	msg := transport.Message{
+		Type: "chat",
+		Data: map[string]interface{}{
+			"sender": sender,
+			"text":   text,
 		},
 	}
 
-	payload, err := json.Marshal(outgoing)
-	if err != nil {
-		log.Println("system message marshal error:", err)
-		return
-	}
+	payload := r.mustMarshal(msg)
 
 	for _, c := range r.clients {
 		c.Send <- payload
 	}
+}
+
+// broadcastCorrectGuess sends a message to all clients indicating that a player has made a correct guess.
+func (r *Room) broadcastCorrectGuess(name string) {
+	msg := transport.Message{
+		Type: "correct_guess",
+		Data: map[string]interface{}{
+			"player": name,
+		},
+	}
+
+	payload := r.mustMarshal(msg)
+
+	for _, c := range r.clients {
+		c.Send <- payload
+	}
+}
+
+// broadcastSystem sends a system message to all clients in the room, typically used for notifications like players joining/leaving or game state changes.
+func (r *Room) broadcastSystem(text string) {
+	msg := transport.Message{
+		Type: "system",
+		Data: transport.SystemMessage{Text: text},
+	}
+
+	payload := r.mustMarshal(msg)
+
+	for _, c := range r.clients {
+		c.Send <- payload
+	}
+}
+
+// mustMarshal is a helper function that marshals a value to JSON and logs any errors, returning an empty JSON object if marshalling fails.
+func (r *Room) mustMarshal(v interface{}) []byte {
+	b, err := json.Marshal(v)
+	if err != nil {
+		log.Println("marshal error:", err)
+		return []byte("{}")
+	}
+	return b
 }
