@@ -65,3 +65,39 @@ func (g *Game) SetWord(word string) error {
 	g.CurrentTurn.StartTime = time.Now()
 	return nil
 }
+
+// Guess processes a player's guess and updates scores if correct.
+func (g *Game) Guess(playerID, guess string) (bool, error) {
+	if g.CurrentTurn == nil {
+		return false, errors.New("no active turn")
+	}
+
+	if g.CurrentTurn.Completed {
+		return false, nil
+	}
+
+	if playerID == g.CurrentTurn.DrawerID {
+		return false, nil
+	}
+
+	if guess != g.CurrentTurn.Word {
+		return false, nil
+	}
+
+	// correct guess
+	g.CurrentTurn.Guessed[playerID] = true
+
+	elapsed := time.Since(g.CurrentTurn.StartTime).Seconds()
+	score := int(100 - elapsed) // simple time-based scoring
+	if score < 10 {
+		score = 10
+	}
+
+	for _, p := range g.Players {
+		if p.ID == playerID {
+			p.Score += score
+		}
+	}
+
+	return true, nil
+}
