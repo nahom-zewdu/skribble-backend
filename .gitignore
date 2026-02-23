@@ -1,0 +1,22 @@
+# folders
+skribbl-bruno/
+
+# files
+*.log
+*.tmp
+*.cache
+*.bak
+*.swp
+*.swo
+*.DS_Store
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Go specific files
+bin/
+pkg/
+
+# vendor directory (if not using Go modules)
+vendor/
