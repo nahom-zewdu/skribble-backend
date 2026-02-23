@@ -1,8 +1,15 @@
 // internal/game/game.go
-// This file defines the Game struct, which represents the state of a game session in the Skribble backend.
-// It includes fields for the current turn, maximum turns, and game state, along with a constructor function to initialize a new game.
-
+// This file defines the core game logic for Skribble, including the game state machine, player management, and turn handling.
+// It provides the necessary structures and methods to manage the game flow, track player scores, and handle game state transitions.
 package game
+
+import (
+	"time"
+)
+
+/*
+Game State Machine
+*/
 
 type State string
 
@@ -13,16 +20,34 @@ const (
 	Ended   State = "ended"
 )
 
+type Player struct {
+	ID    string
+	Name  string
+	Score int
+}
+
+type Turn struct {
+	Number    int
+	DrawerID  string
+	Word      string
+	StartTime time.Time
+	Guessed   map[string]bool
+	Completed bool
+}
+
 type Game struct {
-	CurrentTurn int
-	MaxTurns    int
 	State       State
+	MaxTurns    int
+	CurrentTurn *Turn
+
+	Players     []*Player
+	playerIndex int
 }
 
 func NewGame() *Game {
 	return &Game{
-		CurrentTurn: 0,
-		MaxTurns:    9, // fixed as per your rule
-		State:       Waiting,
+		State:    Waiting,
+		MaxTurns: 9,
+		Players:  []*Player{},
 	}
 }
