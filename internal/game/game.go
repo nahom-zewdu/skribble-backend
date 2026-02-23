@@ -59,3 +59,14 @@ func (g *Game) AddPlayer(id, name string) {
 		Name: name,
 	})
 }
+
+// RemovePlayer removes a player from the game by their ID.
+func (g *Game) RemovePlayer(id string) {
+	newPlayers := []*Player{}
+	for _, p := range g.Players {
+		if p.ID != id {
+			newPlayers = append(newPlayers, p)
+		}
+	}
+	g.Players = newPlayers
+}
