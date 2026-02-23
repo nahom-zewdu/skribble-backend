@@ -101,3 +101,13 @@ func (g *Game) Guess(playerID, guess string) (bool, error) {
 
 	return true, nil
 }
+
+// EndTurn marks the current turn as completed and starts the next turn.
+func (g *Game) EndTurn() error {
+	if g.CurrentTurn == nil {
+		return errors.New("no active turn")
+	}
+
+	g.CurrentTurn.Completed = true
+	return g.startNextTurn()
+}
