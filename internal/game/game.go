@@ -51,3 +51,11 @@ func NewGame() *Game {
 		Players:  []*Player{},
 	}
 }
+
+// AddPlayer adds a new player to the game.
+func (g *Game) AddPlayer(id, name string) {
+	g.Players = append(g.Players, &Player{
+		ID:   id,
+		Name: name,
+	})
+}
