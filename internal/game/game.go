@@ -20,6 +20,14 @@ const (
 	Ended   State = "ended"
 )
 
+type TurnPhase string
+
+const (
+	PhaseSelecting TurnPhase = "selecting"
+	PhaseDrawing   TurnPhase = "drawing"
+	PhaseEnded     TurnPhase = "ended"
+)
+
 type Player struct {
 	ID    string
 	Name  string
