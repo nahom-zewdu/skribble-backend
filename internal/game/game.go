@@ -35,10 +35,19 @@ type Player struct {
 }
 
 type Turn struct {
-	Number    int
-	DrawerID  string
-	Word      string
-	StartTime time.Time
+	Number   int
+	DrawerID string
+
+	// Word system
+	Word    string   // final selected word
+	Choices []string // 3 selectable words
+	Phase   TurnPhase
+
+	// Timing
+	SelectionDeadline time.Time
+	PlayDeadline      time.Time
+	StartTime         time.Time
+
 	Guessed   map[string]bool
 	Completed bool
 }
