@@ -42,12 +42,15 @@ func (g *Game) startNextTurn() error {
 		turnNumber = g.CurrentTurn.Number + 1
 	}
 
+	now := time.Now()
+
 	g.CurrentTurn = &Turn{
-		Number:    turnNumber,
-		DrawerID:  drawer.ID,
-		Word:      "", // word selected later
-		StartTime: time.Now(),
-		Guessed:   make(map[string]bool),
+		Number:            turnNumber,
+		DrawerID:          drawer.ID,
+		Choices:           generateWordChoices(),
+		Phase:             PhaseSelecting,
+		SelectionDeadline: now.Add(10 * time.Second),
+		Guessed:           make(map[string]bool),
 	}
 
 	g.playerIndex++
