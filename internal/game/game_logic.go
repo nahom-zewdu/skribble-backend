@@ -130,6 +130,10 @@ func (g *Game) Guess(playerID, guess string) (bool, error) {
 		return false, nil
 	}
 
+	if g.CurrentTurn.Guessed[playerID] {
+		return false, nil
+	}
+
 	// correct guess
 	g.CurrentTurn.Guessed[playerID] = true
 
