@@ -174,3 +174,16 @@ func (g *Game) CheckTurnTimeout() {
 		g.EndTurn()
 	}
 }
+
+// MaskedWord returns the current word with letters masked for guessing players.
+func (g *Game) MaskedWord() string {
+	if g.CurrentTurn == nil || g.CurrentTurn.Word == "" {
+		return ""
+	}
+
+	mask := ""
+	for range g.CurrentTurn.Word {
+		mask += "_ "
+	}
+	return mask
+}
