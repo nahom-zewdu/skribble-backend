@@ -157,3 +157,16 @@ func (g *Game) EndTurn() error {
 	g.CurrentTurn.Completed = true
 	return g.startNextTurn()
 }
+
+// CheckTurnTimeout checks if the current turn has exceeded its play deadline and ends the turn if necessary.
+func (g *Game) CheckTurnTimeout() {
+	if g.CurrentTurn == nil {
+		return
+	}
+
+	if g.CurrentTurn.Phase == PhaseDrawing &&
+		time.Now().After(g.CurrentTurn.PlayDeadline) {
+
+		g.EndTurn()
+	}
+}
