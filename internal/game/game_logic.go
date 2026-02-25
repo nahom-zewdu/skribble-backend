@@ -95,6 +95,23 @@ func (g *Game) SelectWord(playerID, word string) error {
 	return nil
 }
 
+// AutoSelectWord automatically selects a word for the drawer if they fail to choose within the deadline.
+func (g *Game) AutoSelectWord() {
+	if g.CurrentTurn == nil {
+		return
+	}
+
+	if g.CurrentTurn.Phase != PhaseSelecting {
+		return
+	}
+
+	if time.Now().After(g.CurrentTurn.SelectionDeadline) {
+		// fallback to first word
+		word := g.CurrentTurn.Choices[0]
+		_ = g.SelectWord(g.CurrentTurn.DrawerID, word)
+	}
+}
+
 // Guess processes a player's guess and updates scores if correct.
 func (g *Game) Guess(playerID, guess string) (bool, error) {
 	if g.CurrentTurn == nil {
