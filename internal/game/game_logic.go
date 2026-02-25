@@ -58,14 +58,40 @@ func (g *Game) startNextTurn() error {
 	return nil
 }
 
-// SetWord assigns the selected word to the current turn and starts the timer.
-func (g *Game) SetWord(word string) error {
+// SelectWord allows the drawer to select a word for the current turn, transitioning to the drawing phase.
+func (g *Game) SelectWord(playerID, word string) error {
 	if g.CurrentTurn == nil {
 		return errors.New("no active turn")
 	}
 
+	if g.CurrentTurn.Phase != PhaseSelecting {
+		return errors.New("not in selection phase")
+	}
+
+	if playerID != g.CurrentTurn.DrawerID {
+		return errors.New("only drawer can select word")
+	}
+
+	// validate choice
+	valid := false
+	for _, w := range g.CurrentTurn.Choices {
+		if w == word {
+			valid = true
+			break
+		}
+	}
+
+	if !valid {
+		return errors.New("invalid word choice")
+	}
+
+	now := time.Now()
+
 	g.CurrentTurn.Word = word
-	g.CurrentTurn.StartTime = time.Now()
+	g.CurrentTurn.Phase = PhaseDrawing
+	g.CurrentTurn.StartTime = now
+	g.CurrentTurn.PlayDeadline = now.Add(65 * time.Second)
+
 	return nil
 }
 
