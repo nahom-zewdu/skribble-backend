@@ -62,17 +62,9 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		}, errors.New("game ended")
 	}
 
-	if len(g.Players) == 0 {
-		g.State = Ended
-		return []GameEvent{
-			{
-				Type:      EventGameEnded,
-				Timestamp: time.Now(),
-				Payload: GameEndedPayload{
-					Players: g.Players,
-				},
-			},
-		}, errors.New("no players")
+	if len(g.Players) < 2 {
+		g.State = Waiting
+		return nil, errors.New("not enough players to continue")
 	}
 
 	drawer := g.Players[g.playerIndex%len(g.Players)]
