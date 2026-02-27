@@ -5,7 +5,6 @@ package game
 
 import (
 	"errors"
-	"log"
 	"time"
 )
 
@@ -142,20 +141,21 @@ func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 }
 
 // AutoSelectWord automatically selects a word for the drawer if they fail to choose within the deadline.
-func (g *Game) AutoSelectWord() {
+func (g *Game) AutoSelectWord() ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
-		return
+		return nil, errors.New("no active turn")
 	}
 
 	if g.CurrentTurn.Phase != PhaseSelecting {
-		return
+		return nil, errors.New("not in selection phase")
 	}
 
 	if time.Now().After(g.CurrentTurn.SelectionDeadline) {
 		// fallback to first word
 		word := g.CurrentTurn.Choices[0]
-		_ = g.SelectWord(g.CurrentTurn.DrawerID, word)
+		return g.SelectWord(g.CurrentTurn.DrawerID, word)
 	}
+	return nil, errors.New("couldn't select word")
 }
 
 // Guess processes a player's guess and updates scores if correct.
@@ -233,19 +233,17 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 }
 
 // CheckTurnTimeout checks if the current turn has exceeded its play deadline and ends the turn if necessary.
-func (g *Game) CheckTurnTimeout() {
+func (g *Game) CheckTurnTimeout() ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
-		return
+		return nil, errors.New("no active turn")
 	}
 
 	if g.CurrentTurn.Phase == PhaseDrawing &&
 		time.Now().After(g.CurrentTurn.PlayDeadline) {
 
-		err := g.EndTurn()
-		if err != nil {
-			log.Printf("Error ending turn: %v", err)
-		}
+		return g.EndTurn()
 	}
+	return nil, nil
 }
 
 // MaskedWord returns the current word with letters masked for guessing players.
