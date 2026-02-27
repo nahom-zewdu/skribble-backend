@@ -119,7 +119,6 @@ func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 		return nil, errors.New("only drawer can select word")
 	}
 
-	// validate choice
 	valid := false
 	for _, w := range g.CurrentTurn.Choices {
 		if w == word {
@@ -127,7 +126,6 @@ func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 			break
 		}
 	}
-
 	if !valid {
 		return nil, errors.New("invalid word choice")
 	}
