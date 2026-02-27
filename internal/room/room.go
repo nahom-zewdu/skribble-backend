@@ -119,8 +119,8 @@ func (r *Room) onLeave(c *client.Client) {
 	}
 
 	if len(r.clients) < 2 {
-		r.game.State = game.Paused
-		r.broadcastSystem("Game paused")
+		r.game.State = game.Waiting
+		r.broadcastSystem("Not enough players. Waiting for more to join...")
 	}
 }
 
