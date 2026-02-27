@@ -255,17 +255,33 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 		return events, err
 	}
 
-// CheckTurnTimeout checks if the current turn has exceeded its play deadline and ends the turn if necessary.
-func (g *Game) CheckTurnTimeout() ([]GameEvent, error) {
+	return append(events, nextEvents...), nil
+}
+
+// HandleTimeouts checks for any timeouts (word selection or drawing) and processes them accordingly.
+func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
-		return nil, errors.New("no active turn")
+		return nil, nil
 	}
 
+	now := time.Now()
+
+	// Word selection timeout
+	if g.CurrentTurn.Phase == PhaseSelecting &&
+		now.After(g.CurrentTurn.SelectionDeadline) {
+
+		// fallback to first choice
+		word := g.CurrentTurn.Choices[0]
+		return g.SelectWord(g.CurrentTurn.DrawerID, word)
+	}
+
+	// Drawing timeout
 	if g.CurrentTurn.Phase == PhaseDrawing &&
-		time.Now().After(g.CurrentTurn.PlayDeadline) {
+		now.After(g.CurrentTurn.PlayDeadline) {
 
 		return g.EndTurn()
 	}
+
 	return nil, nil
 }
 
