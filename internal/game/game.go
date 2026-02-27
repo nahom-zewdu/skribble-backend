@@ -80,9 +80,9 @@ func (g *Game) AddPlayer(id, name string) {
 	})
 }
 
-// RemovePlayer removes a player from the game by ID.
-// It ensures rotation safety and turn stability.
-func (g *Game) RemovePlayer(id string) {
+// RemovePlayer removes a player and handles structural consequences.
+// It emits domain events if the removal affects game flow.
+func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	if len(g.Players) == 0 {
 		return
 	}
