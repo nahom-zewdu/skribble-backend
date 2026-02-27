@@ -48,7 +48,7 @@ func (g *Game) startNextTurn() error {
 	g.CurrentTurn = &Turn{
 		Number:            turnNumber,
 		DrawerID:          drawer.ID,
-		Choices:           generateWordChoices(),
+		Choices:           g.wordProvider.GenerateChoices(3),
 		Phase:             PhaseSelecting,
 		SelectionDeadline: now.Add(10 * time.Second),
 		Guessed:           make(map[string]bool),
