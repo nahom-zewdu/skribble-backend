@@ -186,21 +186,39 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 		case game.EventTurnStarted:
 			payload := e.Payload.(game.TurnStartedPayload)
 
-	for _, c := range r.clients {
-		if c.ID == turn.DrawerID {
-			c.Send <- r.mustMarshal(transport.Message{
-				Type: "your_turn",
-				Data: map[string]interface{}{
-					"turn": turn.Number,
-				},
-			})
-		} else {
-			c.Send <- r.mustMarshal(transport.Message{
-				Type: "turn_started",
-				Data: map[string]interface{}{
-					"turn": turn.Number,
-				},
-			})
+			for _, c := range r.clients {
+				if c.ID == payload.DrawerID {
+					c.Send <- r.mustMarshal(transport.Message{
+						Type: "your_turn",
+						Data: payload,
+					})
+				} else {
+					c.Send <- r.mustMarshal(transport.Message{
+						Type: "turn_started",
+						Data: map[string]interface{}{
+							"turn":   payload.TurnNumber,
+							"drawer": payload.DrawerID,
+						},
+					})
+				}
+			}
+
+		case game.EventWordSelected:
+			// do not broadcast actual word to everyone
+			r.broadcastSystem("Word selected. Drawing started.")
+
+		case game.EventCorrectGuess:
+			payload := e.Payload.(game.CorrectGuessPayload)
+
+			name := r.clients[payload.PlayerID].Name
+			r.broadcastCorrectGuess(name)
+
+		case game.EventTurnEnded:
+			payload := e.Payload.(game.TurnEndedPayload)
+			r.broadcastSystem("Turn ended. Word was: " + payload.Word)
+
+		case game.EventGameEnded:
+			r.broadcastSystem("Game ended")
 		}
 	}
 }
