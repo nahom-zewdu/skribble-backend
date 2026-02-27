@@ -91,6 +91,7 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		Phase:             PhaseSelecting,
 		SelectionDeadline: now.Add(10 * time.Second),
 		Guessed:           make(map[string]bool),
+		Completed:         false,
 	}
 
 	g.playerIndex++
