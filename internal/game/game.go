@@ -117,19 +117,20 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 		g.playerIndex = 0
 	}
 
-	// If drawer left, mark turn as completed (engine will decide next action)
-	if isDrawer && g.CurrentTurn != nil {
-		g.CurrentTurn.Phase = PhaseEnded
-		g.CurrentTurn.Completed = true
-	}
-
-	// If no players left → end game
-	if len(g.Players) == 0 {
+	// Structural state adjustments
+	if len(g.Players) <= 0 {
 		g.State = Ended
-		return
+		return []GameEvent{
+			{
+				Type:      EventGameEnded,
+				Timestamp: time.Now(),
+				Payload: GameEndedPayload{
+					Players: g.Players,
+				},
+			},
+		}, nil
 	}
 
-	// If fewer than 2 players → back to waiting
 	if len(g.Players) < 2 {
 		g.State = Waiting
 	}
