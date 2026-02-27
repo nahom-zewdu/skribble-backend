@@ -266,3 +266,21 @@ func (g *Game) MaskedWord() string {
 	}
 	return mask
 }
+
+// UpdateGameState updates the game state based on the number of players and current state.
+func (g *Game) UpdateGameState(newState State) {
+	if len(g.Players) <= 0 {
+		g.State = Ended
+		return
+	}
+
+	if len(g.Players) < 2 && g.State == Playing {
+		g.State = Waiting
+		return
+	}
+
+	if newState != "" && len(g.Players) > 2 {
+		g.State = newState
+	}
+
+}
