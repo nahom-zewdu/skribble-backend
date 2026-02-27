@@ -60,3 +60,8 @@ func (e *Engine) Start() ([]game.GameEvent, error) {
 func (e *Engine) Guess(playerID, guess string) ([]game.GameEvent, error) {
 	return e.game.Guess(playerID, guess)
 }
+
+// SelectWord allows the drawer to select a word and returns any resulting game events.
+func (e *Engine) SelectWord(playerID, word string) ([]game.GameEvent, error) {
+	return e.game.SelectWord(playerID, word)
+}
