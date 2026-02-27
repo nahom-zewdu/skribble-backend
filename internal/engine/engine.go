@@ -80,3 +80,8 @@ func (e *Engine) EndTurn() ([]game.GameEvent, error) {
 func (e *Engine) AddPlayer(id, name string) {
 	e.game.AddPlayer(id, name)
 }
+
+// RemovePlayer removes a player from the game by their ID.
+func (e *Engine) RemovePlayer(id string) {
+	e.game.RemovePlayer(id)
+}
