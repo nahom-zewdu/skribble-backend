@@ -55,3 +55,8 @@ func (e *Engine) Tick() []game.GameEvent {
 func (e *Engine) Start() ([]game.GameEvent, error) {
 	return e.game.Start()
 }
+
+// Guess processes a player's guess and returns any resulting game events.
+func (e *Engine) Guess(playerID, guess string) ([]game.GameEvent, error) {
+	return e.game.Guess(playerID, guess)
+}
