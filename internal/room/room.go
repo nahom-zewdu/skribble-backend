@@ -109,7 +109,7 @@ func (r *Room) onJoin(c *client.Client) {
 func (r *Room) onLeave(c *client.Client) {
 	r.broadcastSystem(c.Name + " left")
 
-	if r.game.CurrentTurn != nil && c.ID == r.game.CurrentTurn.DrawerID {
+	if r.engine.Game().CurrentTurn != nil && c.ID == r.engine.Game().CurrentTurn.DrawerID {
 		events, err := r.engine.EndTurn()
 		if err == nil {
 			r.handleEvents(events)
