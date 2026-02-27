@@ -71,6 +71,10 @@ func (r *Room) run() {
 	for {
 		select {
 
+		case <-ticker.C:
+			events := r.engine.Tick()
+			r.handleEvents(events)
+
 		case c := <-r.register:
 			r.clients[c.ID] = c
 			r.game.AddPlayer(c.ID, c.Name)
