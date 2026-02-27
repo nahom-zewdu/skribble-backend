@@ -42,7 +42,6 @@ func NewRoom(id string) *Room {
 		register:   make(chan *client.Client),
 		unregister: make(chan *client.Client),
 		incoming:   make(chan clientMessage),
-		game:       g,
 		engine:     e,
 	}
 
