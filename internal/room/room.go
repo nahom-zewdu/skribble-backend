@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
+	"github.com/nahom-zewdu/skribble-backend/internal/engine"
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
 	"github.com/nahom-zewdu/skribble-backend/internal/transport"
 )
