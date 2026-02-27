@@ -90,3 +90,8 @@ func (e *Engine) RemovePlayer(id string) {
 func (e *Engine) Game() *game.Game {
 	return e.game
 }
+
+// UpdateGameState allows external updates to the game state, if needed.
+func (e *Engine) UpdateGameState(newState game.State) {
+	e.game.UpdateGameState(newState)
+}
