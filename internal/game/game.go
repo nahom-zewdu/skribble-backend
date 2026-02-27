@@ -84,7 +84,7 @@ func (g *Game) AddPlayer(id, name string) {
 // It emits domain events if the removal affects game flow.
 func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	if len(g.Players) == 0 {
-		return
+		return nil, nil
 	}
 
 	removedIndex := -1
@@ -96,7 +96,7 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	}
 
 	if removedIndex == -1 {
-		return
+		return nil, nil
 	}
 
 	// Check if removed player is current drawer
@@ -108,7 +108,7 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	// Remove player from slice
 	g.Players = append(g.Players[:removedIndex], g.Players[removedIndex+1:]...)
 
-	// Adjust rotation index safely
+	// Fix rotation index
 	if removedIndex < g.playerIndex {
 		g.playerIndex--
 	}
