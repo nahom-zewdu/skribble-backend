@@ -100,8 +100,9 @@ func (r *Room) onJoin(c *client.Client) {
 	r.broadcastSystem(c.Name + " joined")
 
 	if len(r.clients) >= 2 && r.game.State == game.Waiting {
-		if _, err := r.game.Start(); err == nil {
-			r.startTurnBroadcast()
+		events, err := r.engine.Start()
+		if err == nil {
+			r.handleEvents(events)
 		}
 	}
 }
