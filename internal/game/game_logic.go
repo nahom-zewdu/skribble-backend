@@ -242,7 +242,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 	events := []GameEvent{
 		{
 			Type:      EventTurnEnded,
-			Timestamp: time.Now(),
+			Timestamp: now,
 			Payload: TurnEndedPayload{
 				TurnNumber: g.CurrentTurn.Number,
 				Word:       g.CurrentTurn.Word,
@@ -251,10 +251,9 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 	}
 
 	nextEvents, err := g.startNextTurn()
-	events = append(events, nextEvents...)
-
-	return events, err
-}
+	if err != nil {
+		return events, err
+	}
 
 // CheckTurnTimeout checks if the current turn has exceeded its play deadline and ends the turn if necessary.
 func (g *Game) CheckTurnTimeout() ([]GameEvent, error) {
