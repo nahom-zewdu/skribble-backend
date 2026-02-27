@@ -75,3 +75,8 @@ func (e *Engine) AutoSelectWord() ([]game.GameEvent, error) {
 func (e *Engine) EndTurn() ([]game.GameEvent, error) {
 	return e.game.EndTurn()
 }
+
+// AddPlayer adds a new player to the game.
+func (e *Engine) AddPlayer(id, name string) {
+	e.game.AddPlayer(id, name)
+}
