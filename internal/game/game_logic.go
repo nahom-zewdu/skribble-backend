@@ -96,17 +96,17 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 }
 
 // SelectWord allows the drawer to select a word for the current turn, transitioning to the drawing phase.
-func (g *Game) SelectWord(playerID, word string) error {
+func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
-		return errors.New("no active turn")
+		return nil, errors.New("no active turn")
 	}
 
 	if g.CurrentTurn.Phase != PhaseSelecting {
-		return errors.New("not in selection phase")
+		return nil, errors.New("not in selection phase")
 	}
 
 	if playerID != g.CurrentTurn.DrawerID {
-		return errors.New("only drawer can select word")
+		return nil, errors.New("only drawer can select word")
 	}
 
 	// validate choice
@@ -119,7 +119,7 @@ func (g *Game) SelectWord(playerID, word string) error {
 	}
 
 	if !valid {
-		return errors.New("invalid word choice")
+		return nil, errors.New("invalid word choice")
 	}
 
 	now := time.Now()
@@ -129,7 +129,16 @@ func (g *Game) SelectWord(playerID, word string) error {
 	g.CurrentTurn.StartTime = now
 	g.CurrentTurn.PlayDeadline = now.Add(65 * time.Second)
 
-	return nil
+	return []GameEvent{
+		{
+			Type:      EventWordSelected,
+			Timestamp: now,
+			Payload: WordSelectedPayload{
+				DrawerID: playerID,
+				Word:     word,
+			},
+		},
+	}, nil
 }
 
 // AutoSelectWord automatically selects a word for the drawer if they fail to choose within the deadline.
