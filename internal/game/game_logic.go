@@ -5,6 +5,7 @@ package game
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -171,7 +172,10 @@ func (g *Game) CheckTurnTimeout() {
 	if g.CurrentTurn.Phase == PhaseDrawing &&
 		time.Now().After(g.CurrentTurn.PlayDeadline) {
 
-		g.EndTurn()
+		err := g.EndTurn()
+		if err != nil {
+			log.Printf("Error ending turn: %v", err)
+		}
 	}
 }
 
