@@ -37,16 +37,25 @@ func (g *Game) Start() ([]GameEvent, error) {
 	return append(events, turnEvents...), nil
 }
 
-// startNextTurn advances the game to the next turn, selecting the next drawer and resetting turn state.
-func (g *Game) startNextTurn() error {
+// startNextTurn sets up the next turn in the game, selecting the next drawer and generating word choices.
+func (g *Game) startNextTurn() ([]GameEvent, error) {
 	if g.CurrentTurn != nil && g.CurrentTurn.Number >= g.MaxTurns {
 		g.State = Ended
-		return errors.New("game ended")
+
+		return []GameEvent{
+			{
+				Type:      EventGameEnded,
+				Timestamp: time.Now(),
+				Payload: GameEndedPayload{
+					Players: g.Players,
+				},
+			},
+		}, errors.New("game ended")
 	}
 
 	if len(g.Players) == 0 {
 		g.State = Waiting
-		return errors.New("no players")
+		return nil, errors.New("no players")
 	}
 
 	drawer := g.Players[g.playerIndex%len(g.Players)]
@@ -69,7 +78,21 @@ func (g *Game) startNextTurn() error {
 
 	g.playerIndex++
 
-	return nil
+	return []GameEvent{
+		{
+			Type:      EventTurnStarted,
+			Timestamp: now,
+			Payload: TurnStartedPayload{
+				TurnNumber: turnNumber,
+				DrawerID:   drawer.ID,
+				Choices:    g.CurrentTurn.Choices,
+			},
+		},
+		{
+			Type:      EventWordSelectionStart,
+			Timestamp: now,
+		},
+	}, nil
 }
 
 // SelectWord allows the drawer to select a word for the current turn, transitioning to the drawing phase.
