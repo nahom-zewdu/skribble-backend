@@ -250,6 +250,19 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 		},
 	}
 
+	// If less than 2 players remain end game
+	if len(g.Players) < 2 {
+		g.State = Ended
+		events = append(events, GameEvent{
+			Type:      EventGameEnded,
+			Timestamp: now,
+			Payload: GameEndedPayload{
+				Players: g.Players,
+			},
+		})
+		return events, nil
+	}
+
 	nextEvents, err := g.startNextTurn()
 	if err != nil {
 		return events, err
