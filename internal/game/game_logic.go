@@ -208,13 +208,28 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 }
 
 // EndTurn marks the current turn as completed and starts the next turn.
-func (g *Game) EndTurn() error {
+func (g *Game) EndTurn() ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
-		return errors.New("no active turn")
+		return nil, errors.New("no active turn")
 	}
 
 	g.CurrentTurn.Completed = true
-	return g.startNextTurn()
+
+	events := []GameEvent{
+		{
+			Type:      EventTurnEnded,
+			Timestamp: time.Now(),
+			Payload: TurnEndedPayload{
+				TurnNumber: g.CurrentTurn.Number,
+				Word:       g.CurrentTurn.Word,
+			},
+		},
+	}
+
+	nextEvents, err := g.startNextTurn()
+	events = append(events, nextEvents...)
+
+	return events, err
 }
 
 // CheckTurnTimeout checks if the current turn has exceeded its play deadline and ends the turn if necessary.
