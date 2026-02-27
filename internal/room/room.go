@@ -116,8 +116,10 @@ func (r *Room) onLeave(c *client.Client) {
 		}
 	}
 
-	if len(r.clients) < 2 {
-		r.game.State = game.Waiting
+	if len(r.clients) <= 0 {
+		r.engine.UpdateGameState(game.Ended)
+	} else if len(r.clients) < 2 {
+		r.engine.UpdateGameState(game.Waiting)
 		r.broadcastSystem("Not enough players. Waiting for more to join...")
 	}
 }
