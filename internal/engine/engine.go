@@ -50,3 +50,8 @@ func (e *Engine) Tick() []game.GameEvent {
 
 	return events
 }
+
+// Start initiates the game and returns any resulting game events.
+func (e *Engine) Start() ([]game.GameEvent, error) {
+	return e.game.Start()
+}
