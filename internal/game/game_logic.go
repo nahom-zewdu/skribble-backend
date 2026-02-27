@@ -8,7 +8,17 @@ import (
 	"time"
 )
 
-// Start initializes the game and starts the first turn, transitioning the game state to Playing.
+/*
+Domain Invariants Enforced Here:
+
+1. Game state transitions only happen inside domain methods.
+2. Turn lifecycle is fully controlled by Game.
+3. Timeouts are handled ONLY through HandleTimeouts().
+4. No external mutation of Game.State.
+5. All meaningful transitions emit events.
+*/
+
+// Start initializes the game and starts the first turn.
 func (g *Game) Start() ([]GameEvent, error) {
 	if len(g.Players) < 2 {
 		return nil, errors.New("not enough players")
