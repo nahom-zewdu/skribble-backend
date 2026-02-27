@@ -70,3 +70,8 @@ func (e *Engine) SelectWord(playerID, word string) ([]game.GameEvent, error) {
 func (e *Engine) AutoSelectWord() ([]game.GameEvent, error) {
 	return e.game.AutoSelectWord()
 }
+
+// EndTurn ends the current turn and returns any resulting game events.
+func (e *Engine) EndTurn() ([]game.GameEvent, error) {
+	return e.game.EndTurn()
+}
