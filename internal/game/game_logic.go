@@ -174,7 +174,7 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	}
 
 	if g.CurrentTurn.Completed {
-		return nil, errors.New("turn is completed")
+		return nil, errors.New("turn completed")
 	}
 
 	if playerID == g.CurrentTurn.DrawerID {
