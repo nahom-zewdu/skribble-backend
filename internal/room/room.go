@@ -65,6 +65,9 @@ func (r *Room) HandleClientMessage(c *client.Client, msg []byte) {
 
 // run is the main loop for the room, handling client registration, unregistration, and incoming messages.
 func (r *Room) run() {
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
 
