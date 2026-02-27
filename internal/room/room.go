@@ -24,7 +24,8 @@ type Room struct {
 	unregister chan *client.Client
 	incoming   chan clientMessage
 
-	game *game.Game
+	game   *game.Game
+	engine *engine.Engine
 }
 
 type clientMessage struct {
