@@ -9,19 +9,32 @@ import (
 	"time"
 )
 
-// Start initializes the game and starts the first turn.
-func (g *Game) Start() error {
+// Start initializes the game and starts the first turn, transitioning the game state to Playing.
+func (g *Game) Start() ([]GameEvent, error) {
 	if len(g.Players) < 2 {
-		return errors.New("not enough players")
+		return nil, errors.New("not enough players")
 	}
 
 	if g.State == Playing {
-		return nil
+		return nil, nil
 	}
 
 	g.State = Playing
 	g.playerIndex = 0
-	return g.startNextTurn()
+
+	events := []GameEvent{
+		{
+			Type:      EventGameStarted,
+			Timestamp: time.Now(),
+		},
+	}
+
+	turnEvents, err := g.startNextTurn()
+	if err != nil {
+		return events, err
+	}
+
+	return append(events, turnEvents...), nil
 }
 
 // startNextTurn advances the game to the next turn, selecting the next drawer and resetting turn state.
