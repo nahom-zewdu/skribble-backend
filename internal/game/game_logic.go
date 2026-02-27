@@ -55,7 +55,6 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 
 	if g.CurrentTurn != nil && g.CurrentTurn.Number >= g.MaxTurns {
 		g.State = Ended
-
 		return []GameEvent{
 			{
 				Type:      EventGameEnded,
@@ -67,20 +66,13 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		}, errors.New("game ended")
 	}
 
-	if len(g.Players) < 2 {
-		g.State = Waiting
-		return nil, errors.New("not enough players to continue")
-	}
-
 	drawer := g.Players[g.playerIndex%len(g.Players)]
-
 	turnNumber := 1
 	if g.CurrentTurn != nil {
 		turnNumber = g.CurrentTurn.Number + 1
 	}
 
 	now := time.Now()
-
 	g.CurrentTurn = &Turn{
 		Number:            turnNumber,
 		DrawerID:          drawer.ID,
@@ -110,16 +102,14 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 	}, nil
 }
 
-// SelectWord allows the drawer to select a word for the current turn, transitioning to the drawing phase.
+// SelectWord allows the drawer to select a word for the current turn.
 func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
 		return nil, errors.New("no active turn")
 	}
-
 	if g.CurrentTurn.Phase != PhaseSelecting {
 		return nil, errors.New("not in selection phase")
 	}
-
 	if playerID != g.CurrentTurn.DrawerID {
 		return nil, errors.New("only drawer can select word")
 	}
@@ -136,7 +126,6 @@ func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 	}
 
 	now := time.Now()
-
 	g.CurrentTurn.Word = word
 	g.CurrentTurn.Phase = PhaseDrawing
 	g.CurrentTurn.StartTime = now
@@ -154,57 +143,44 @@ func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 	}, nil
 }
 
-// AutoSelectWord automatically selects a word for the drawer if they fail to choose within the deadline.
+// AutoSelectWord automatically chooses a word if drawer misses the deadline.
 func (g *Game) AutoSelectWord() ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
 		return nil, errors.New("no active turn")
 	}
-
 	if g.CurrentTurn.Phase != PhaseSelecting {
 		return nil, errors.New("not in selection phase")
 	}
-
 	if time.Now().After(g.CurrentTurn.SelectionDeadline) {
-		// fallback to first word
-		word := g.CurrentTurn.Choices[0]
-		return g.SelectWord(g.CurrentTurn.DrawerID, word)
+		return g.SelectWord(g.CurrentTurn.DrawerID, g.CurrentTurn.Choices[0])
 	}
-	return nil, errors.New("couldn't select word")
+	return nil, nil
 }
 
-// Guess processes a player's guess and updates scores if correct.
+// Guess processes a player's guess.
 func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
-	if g.CurrentTurn == nil {
-		return nil, errors.New("no active turn")
+	if g.CurrentTurn == nil || g.CurrentTurn.Completed {
+		return nil, errors.New("no active turn or turn completed")
 	}
-
-	if g.CurrentTurn.Completed {
-		return nil, errors.New("turn completed")
-	}
-
 	if playerID == g.CurrentTurn.DrawerID {
 		return nil, errors.New("drawer cannot guess")
 	}
-
+	if g.CurrentTurn.Guessed[playerID] {
+		return nil, errors.New("already guessed")
+	}
 	if guess != g.CurrentTurn.Word {
 		return nil, nil
 	}
 
-	if g.CurrentTurn.Guessed[playerID] {
-		return nil, errors.New("already guessed")
-	}
-
 	g.CurrentTurn.Guessed[playerID] = true
 
-	// Bounded time-based scoring
+	// Time-based scoring
 	elapsed := time.Since(g.CurrentTurn.StartTime).Seconds()
 	maxDuration := 65.0
-
 	remaining := maxDuration - elapsed
 	if remaining < 0 {
 		remaining = 0
 	}
-
 	score := int((remaining / maxDuration) * 100)
 	if score < 10 {
 		score = 10
@@ -229,21 +205,16 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	}, nil
 }
 
-// EndTurn marks the current turn as completed and starts the next turn.
+// EndTurn marks the current turn as completed and starts next turn or ends game.
 func (g *Game) EndTurn() ([]GameEvent, error) {
-	if g.CurrentTurn == nil {
-		return nil, errors.New("no active turn")
-	}
-
-	if g.CurrentTurn.Completed {
-		return nil, errors.New("turn already completed")
+	if g.CurrentTurn == nil || g.CurrentTurn.Completed {
+		return nil, errors.New("no active turn or already ended")
 	}
 
 	g.CurrentTurn.Completed = true
 	g.CurrentTurn.Phase = PhaseEnded
 
 	now := time.Now()
-
 	events := []GameEvent{
 		{
 			Type:      EventTurnEnded,
@@ -272,43 +243,35 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 	if err != nil {
 		return events, err
 	}
-
 	return append(events, nextEvents...), nil
 }
 
-// HandleTimeouts checks for any timeouts (word selection or drawing) and processes them accordingly.
+// HandleTimeouts processes word selection and drawing timeouts.
 func (g *Game) HandleTimeouts() ([]GameEvent, error) {
-	if g.CurrentTurn == nil {
+	if g.CurrentTurn == nil || g.CurrentTurn.Completed {
 		return nil, nil
 	}
 
 	now := time.Now()
 
 	// Word selection timeout
-	if g.CurrentTurn.Phase == PhaseSelecting &&
-		now.After(g.CurrentTurn.SelectionDeadline) {
-
-		// fallback to first choice
-		word := g.CurrentTurn.Choices[0]
-		return g.SelectWord(g.CurrentTurn.DrawerID, word)
+	if g.CurrentTurn.Phase == PhaseSelecting && now.After(g.CurrentTurn.SelectionDeadline) {
+		return g.SelectWord(g.CurrentTurn.DrawerID, g.CurrentTurn.Choices[0])
 	}
 
 	// Drawing timeout
-	if g.CurrentTurn.Phase == PhaseDrawing &&
-		now.After(g.CurrentTurn.PlayDeadline) {
-
+	if g.CurrentTurn.Phase == PhaseDrawing && now.After(g.CurrentTurn.PlayDeadline) {
 		return g.EndTurn()
 	}
 
 	return nil, nil
 }
 
-// MaskedWord returns the current word with letters masked for guessing players.
+// MaskedWord returns the current word masked for guessing players.
 func (g *Game) MaskedWord() string {
 	if g.CurrentTurn == nil || g.CurrentTurn.Word == "" {
 		return ""
 	}
-
 	mask := ""
 	for range g.CurrentTurn.Word {
 		mask += "_ "
