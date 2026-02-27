@@ -159,25 +159,25 @@ func (g *Game) AutoSelectWord() {
 }
 
 // Guess processes a player's guess and updates scores if correct.
-func (g *Game) Guess(playerID, guess string) (bool, error) {
+func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	if g.CurrentTurn == nil {
-		return false, errors.New("no active turn")
+		return nil, errors.New("no active turn")
 	}
 
 	if g.CurrentTurn.Completed {
-		return false, nil
+		return nil, errors.New("turn is completed")
 	}
 
 	if playerID == g.CurrentTurn.DrawerID {
-		return false, nil
+		return nil, errors.New("drawer cannot guess")
 	}
 
 	if guess != g.CurrentTurn.Word {
-		return false, nil
+		return nil, errors.New("incorrect guess")
 	}
 
 	if g.CurrentTurn.Guessed[playerID] {
-		return false, nil
+		return nil, errors.New("already guessed")
 	}
 
 	// correct guess
@@ -195,7 +195,16 @@ func (g *Game) Guess(playerID, guess string) (bool, error) {
 		}
 	}
 
-	return true, nil
+	return []GameEvent{
+		{
+			Type:      EventCorrectGuess,
+			Timestamp: time.Now(),
+			Payload: CorrectGuessPayload{
+				PlayerID: playerID,
+				Score:    score,
+			},
+		},
+	}, nil
 }
 
 // EndTurn marks the current turn as completed and starts the next turn.
