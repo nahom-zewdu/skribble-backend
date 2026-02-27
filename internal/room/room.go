@@ -75,7 +75,7 @@ func (r *Room) run() {
 
 		case c := <-r.register:
 			r.clients[c.ID] = c
-			r.game.AddPlayer(c.ID, c.Name)
+			r.engine.AddPlayer(c.ID, c.Name)
 			r.onJoin(c)
 
 		case c := <-r.unregister:
