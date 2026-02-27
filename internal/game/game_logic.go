@@ -230,7 +230,14 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 		return nil, errors.New("no active turn")
 	}
 
+	if g.CurrentTurn.Completed {
+		return nil, errors.New("turn already completed")
+	}
+
 	g.CurrentTurn.Completed = true
+	g.CurrentTurn.Phase = PhaseEnded
+
+	now := time.Now()
 
 	events := []GameEvent{
 		{
