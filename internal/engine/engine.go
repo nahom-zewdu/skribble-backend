@@ -32,7 +32,7 @@ func (e *Engine) Tick() []game.GameEvent {
 		e.game.CurrentTurn.Phase == game.PhaseSelecting &&
 		time.Now().After(e.game.CurrentTurn.SelectionDeadline) {
 
-		ev, _ := e.game.SelectWord(
+		ev, _ := e.SelectWord(
 			e.game.CurrentTurn.DrawerID,
 			e.game.CurrentTurn.Choices[0],
 		)
@@ -44,7 +44,7 @@ func (e *Engine) Tick() []game.GameEvent {
 		e.game.CurrentTurn.Phase == game.PhaseDrawing &&
 		time.Now().After(e.game.CurrentTurn.PlayDeadline) {
 
-		ev, _ := e.game.EndTurn()
+		ev, _ := e.EndTurn()
 		events = append(events, ev...)
 	}
 
