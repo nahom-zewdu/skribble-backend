@@ -23,3 +23,28 @@ type GameEvent struct {
 	Timestamp time.Time
 	Payload   interface{}
 }
+
+type TurnStartedPayload struct {
+	TurnNumber int
+	DrawerID   string
+	Choices    []string
+}
+
+type WordSelectedPayload struct {
+	DrawerID string
+	Word     string
+}
+
+type CorrectGuessPayload struct {
+	PlayerID string
+	Score    int
+}
+
+type TurnEndedPayload struct {
+	TurnNumber int
+	Word       string
+}
+
+type GameEndedPayload struct {
+	Players []*Player
+}
