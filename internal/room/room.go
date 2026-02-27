@@ -112,7 +112,10 @@ func (r *Room) onLeave(c *client.Client) {
 	r.broadcastSystem(c.Name + " left")
 
 	if r.game.CurrentTurn != nil && c.ID == r.game.CurrentTurn.DrawerID {
-		r.endTurn()
+		events, err := r.engine.EndTurn()
+		if err == nil {
+			r.handleEvents(events)
+		}
 	}
 
 	if len(r.clients) < 2 {
