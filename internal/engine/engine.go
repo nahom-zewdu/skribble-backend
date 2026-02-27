@@ -11,14 +11,12 @@ import (
 )
 
 type Engine struct {
-	game         *game.Game
-	tickInterval time.Duration
+	game *game.Game
 }
 
 func New(g *game.Game) *Engine {
 	return &Engine{
-		game:         g,
-		tickInterval: 250 * time.Millisecond,
+		game: g,
 	}
 }
 
