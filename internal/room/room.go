@@ -174,43 +174,17 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 	r.broadcastChat(sender.Name, chat.Text)
 }
 
-// Helper methods for broadcasting messages and managing game state
-func (r *Room) allGuessed() bool {
-	turn := r.game.CurrentTurn
-	if turn == nil {
-		return false
-	}
+// handleEvents routes emitted domain events to clients.
+func (r *Room) handleEvents(events []game.GameEvent) {
+	for _, e := range events {
 
-	for _, p := range r.game.Players {
-		if p.ID == turn.DrawerID {
-			continue
-		}
-		if !turn.Guessed[p.ID] {
-			return false
-		}
-	}
-	return true
-}
+		switch e.Type {
 
-// endTurn ends the current turn and starts the next one, broadcasting updates to clients.
-func (r *Room) endTurn() {
-	if _, err := r.game.EndTurn(); err != nil {
-		r.broadcastSystem("Game ended")
-		return
-	}
+		case game.EventGameStarted:
+			r.broadcastSystem("Game started")
 
-	r.broadcastSystem("Turn ended")
-	r.startTurnBroadcast()
-}
-
-// startTurnBroadcast sends a message to all clients indicating the start of a new turn and who the drawer is.
-func (r *Room) startTurnBroadcast() {
-	turn := r.game.CurrentTurn
-	if turn == nil {
-		return
-	}
-
-	r.broadcastSystem("Turn " + string(rune(turn.Number+'0')) + " started")
+		case game.EventTurnStarted:
+			payload := e.Payload.(game.TurnStartedPayload)
 
 	for _, c := range r.clients {
 		if c.ID == turn.DrawerID {
