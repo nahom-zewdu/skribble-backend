@@ -134,4 +134,11 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	if len(g.Players) < 2 {
 		g.State = Waiting
 	}
+
+	// If drawer left, properly end turn through domain method
+	if isDrawer && g.CurrentTurn != nil && !g.CurrentTurn.Completed {
+		return g.EndTurn()
+	}
+
+	return nil, nil
 }
