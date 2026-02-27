@@ -181,7 +181,7 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	}
 
 	if guess != g.CurrentTurn.Word {
-		return nil, errors.New("incorrect guess")
+		return nil, nil // incorrect guess, no events
 	}
 
 	if g.CurrentTurn.Guessed[playerID] {
