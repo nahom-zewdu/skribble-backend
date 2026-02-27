@@ -118,8 +118,14 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	}
 
 	// Structural state adjustments
-	if len(g.Players) <= 0 {
+	if len(g.Players) < 2 {
 		g.State = Ended
+		// End current turn silently
+		if g.CurrentTurn != nil && !g.CurrentTurn.Completed {
+			g.CurrentTurn.Completed = true
+			g.CurrentTurn.Phase = PhaseEnded
+		}
+
 		return []GameEvent{
 			{
 				Type:      EventGameEnded,
@@ -129,10 +135,6 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 				},
 			},
 		}, nil
-	}
-
-	if len(g.Players) < 2 {
-		g.State = Waiting
 	}
 
 	// If drawer left, properly end turn through domain method
