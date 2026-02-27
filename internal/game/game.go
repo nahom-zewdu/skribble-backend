@@ -80,30 +80,57 @@ func (g *Game) AddPlayer(id, name string) {
 	})
 }
 
-// RemovePlayer removes a player from the game by their ID.
+// RemovePlayer removes a player from the game by ID.
+// It ensures rotation safety and turn stability.
 func (g *Game) RemovePlayer(id string) {
-	newPlayers := []*Player{}
-	for _, p := range g.Players {
-		if p.ID != id {
-			newPlayers = append(newPlayers, p)
+	if len(g.Players) == 0 {
+		return
+	}
+
+	removedIndex := -1
+	for i, p := range g.Players {
+		if p.ID == id {
+			removedIndex = i
+			break
 		}
 	}
 
-	if len(newPlayers) < len(g.Players) {
-		// If the drawer left, end the current turn
-		if g.CurrentTurn != nil && g.CurrentTurn.DrawerID == id {
-			g.CurrentTurn.Phase = PhaseEnded
-			g.CurrentTurn.Completed = true
-		}
-
-		if len(newPlayers) <= 0 {
-			g.State = Ended
-		}
-
-		if len(newPlayers) < 2 {
-			g.State = Waiting
-		}
+	if removedIndex == -1 {
+		return
 	}
 
-	g.Players = newPlayers
+	// Check if removed player is current drawer
+	isDrawer := false
+	if g.CurrentTurn != nil && g.CurrentTurn.DrawerID == id {
+		isDrawer = true
+	}
+
+	// Remove player from slice
+	g.Players = append(g.Players[:removedIndex], g.Players[removedIndex+1:]...)
+
+	// Adjust rotation index safely
+	if removedIndex < g.playerIndex {
+		g.playerIndex--
+	}
+
+	if g.playerIndex >= len(g.Players) {
+		g.playerIndex = 0
+	}
+
+	// If drawer left, mark turn as completed (engine will decide next action)
+	if isDrawer && g.CurrentTurn != nil {
+		g.CurrentTurn.Phase = PhaseEnded
+		g.CurrentTurn.Completed = true
+	}
+
+	// If no players left → end game
+	if len(g.Players) == 0 {
+		g.State = Ended
+		return
+	}
+
+	// If fewer than 2 players → back to waiting
+	if len(g.Players) < 2 {
+		g.State = Waiting
+	}
 }
