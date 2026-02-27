@@ -191,8 +191,16 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 
 	g.CurrentTurn.Guessed[playerID] = true
 
+	// Bounded time-based scoring
 	elapsed := time.Since(g.CurrentTurn.StartTime).Seconds()
-	score := int(100 - elapsed) // simple time-based scoring
+	maxDuration := 65.0
+
+	remaining := maxDuration - elapsed
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	score := int((remaining / maxDuration) * 100)
 	if score < 10 {
 		score = 10
 	}
