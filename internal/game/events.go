@@ -16,6 +16,8 @@ const (
 	EventCorrectGuess       EventType = "correct_guess"
 	EventTurnEnded          EventType = "turn_ended"
 	EventGameEnded          EventType = "game_ended"
+	EventPlayerJoined       EventType = "player_joined"
+	EventPlayerLeft         EventType = "player_left"
 )
 
 type GameEvent struct {
@@ -47,4 +49,14 @@ type TurnEndedPayload struct {
 
 type GameEndedPayload struct {
 	Players []*Player
+}
+
+type PlayerJoinedPayload struct {
+	PlayerID string
+	Name     string
+}
+
+type PlayerLeftPayload struct {
+	PlayerID string
+	Name     string
 }
