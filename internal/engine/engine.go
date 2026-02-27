@@ -65,3 +65,8 @@ func (e *Engine) Guess(playerID, guess string) ([]game.GameEvent, error) {
 func (e *Engine) SelectWord(playerID, word string) ([]game.GameEvent, error) {
 	return e.game.SelectWord(playerID, word)
 }
+
+// AutoSelectWord automatically selects a word for the drawer if they fail to choose within the deadline.
+func (e *Engine) AutoSelectWord() ([]game.GameEvent, error) {
+	return e.game.AutoSelectWord()
+}
