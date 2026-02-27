@@ -48,6 +48,11 @@ func (g *Game) Start() ([]GameEvent, error) {
 
 // startNextTurn sets up the next turn in the game, selecting the next drawer and generating word choices.
 func (g *Game) startNextTurn() ([]GameEvent, error) {
+	if len(g.Players) < 2 {
+		g.State = Waiting
+		return nil, errors.New("not enough players to continue")
+	}
+
 	if g.CurrentTurn != nil && g.CurrentTurn.Number >= g.MaxTurns {
 		g.State = Ended
 
