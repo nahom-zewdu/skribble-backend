@@ -182,14 +182,13 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	}
 
 	if guess != g.CurrentTurn.Word {
-		return nil, nil // incorrect guess, no events
+		return nil, nil
 	}
 
 	if g.CurrentTurn.Guessed[playerID] {
 		return nil, errors.New("already guessed")
 	}
 
-	// correct guess
 	g.CurrentTurn.Guessed[playerID] = true
 
 	elapsed := time.Since(g.CurrentTurn.StartTime).Seconds()
