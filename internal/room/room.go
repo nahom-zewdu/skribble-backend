@@ -136,6 +136,19 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 
 	case "chat":
 		r.handleChat(sender, incoming.Data)
+
+	case "select_word":
+		var data struct {
+			Word string `json:"word"`
+		}
+		if err := json.Unmarshal(incoming.Data, &data); err != nil {
+			return
+		}
+
+		events, err := r.engine.SelectWord(sender.ID, data.Word)
+		if err == nil {
+			r.handleEvents(events)
+		}
 	}
 }
 
