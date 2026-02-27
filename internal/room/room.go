@@ -165,11 +165,9 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-			if r.allGuessed() {
-				r.endTurn()
-			}
-			return
-		}
+	if len(events) > 0 {
+		r.handleEvents(events)
+		return
 	}
 
 	// Normal chat broadcast
