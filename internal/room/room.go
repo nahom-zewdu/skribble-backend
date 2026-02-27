@@ -82,7 +82,7 @@ func (r *Room) run() {
 			if _, ok := r.clients[c.ID]; ok {
 				delete(r.clients, c.ID)
 				close(c.Send)
-				r.game.RemovePlayer(c.ID)
+				r.engine.RemovePlayer(c.ID)
 				r.onLeave(c)
 			}
 
