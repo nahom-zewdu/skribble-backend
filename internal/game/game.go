@@ -88,5 +88,22 @@ func (g *Game) RemovePlayer(id string) {
 			newPlayers = append(newPlayers, p)
 		}
 	}
+
+	if len(newPlayers) < len(g.Players) {
+		// If the drawer left, end the current turn
+		if g.CurrentTurn != nil && g.CurrentTurn.DrawerID == id {
+			g.CurrentTurn.Phase = PhaseEnded
+			g.CurrentTurn.Completed = true
+		}
+
+		if len(newPlayers) <= 0 {
+			g.State = Ended
+		}
+
+		if len(newPlayers) < 2 {
+			g.State = Waiting
+		}
+	}
+
 	g.Players = newPlayers
 }
