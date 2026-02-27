@@ -208,6 +208,7 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	for _, p := range g.Players {
 		if p.ID == playerID {
 			p.Score += score
+			break
 		}
 	}
 
