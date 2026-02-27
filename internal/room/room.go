@@ -34,6 +34,9 @@ type clientMessage struct {
 }
 
 func NewRoom(id string) *Room {
+	g := game.NewGame()
+	e := engine.New(g)
+
 	r := &Room{
 		ID:         id,
 		clients:    make(map[string]*client.Client),
