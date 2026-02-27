@@ -4,6 +4,7 @@
 package game
 
 import (
+	"errors"
 	"time"
 )
 
@@ -72,25 +73,46 @@ func NewGame() *Game {
 	}
 }
 
-// AddPlayer adds a new player to the game.
-func (g *Game) AddPlayer(id, name string) {
-	g.Players = append(g.Players, &Player{
+// AddPlayer adds a new player to the game and emits a PlayerJoined event.
+func (g *Game) AddPlayer(id, name string) ([]GameEvent, error) {
+	// Check if player already exists
+	for _, p := range g.Players {
+		if p.ID == id {
+			return nil, errors.New("player already exists")
+		}
+	}
+
+	player := &Player{
 		ID:   id,
 		Name: name,
-	})
+	}
+
+	g.Players = append(g.Players, player)
+
+	return []GameEvent{
+		{
+			Type:      EventPlayerJoined,
+			Timestamp: time.Now(),
+			Payload: PlayerJoinedPayload{
+				PlayerID: player.ID,
+				Name:     player.Name,
+			},
+		},
+	}, nil
 }
 
-// RemovePlayer removes a player and handles structural consequences.
-// It emits domain events if the removal affects game flow.
+// RemovePlayer removes a player and emits PlayerLeft and potentially GameEnded events.
 func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	if len(g.Players) == 0 {
 		return nil, nil
 	}
 
 	removedIndex := -1
+	var removedPlayer *Player
 	for i, p := range g.Players {
 		if p.ID == id {
 			removedIndex = i
+			removedPlayer = p
 			break
 		}
 	}
@@ -99,48 +121,57 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 		return nil, nil
 	}
 
-	// Check if removed player is current drawer
 	isDrawer := false
 	if g.CurrentTurn != nil && g.CurrentTurn.DrawerID == id {
 		isDrawer = true
 	}
 
-	// Remove player from slice
+	// Remove from slice
 	g.Players = append(g.Players[:removedIndex], g.Players[removedIndex+1:]...)
 
 	// Fix rotation index
 	if removedIndex < g.playerIndex {
 		g.playerIndex--
 	}
-
 	if g.playerIndex >= len(g.Players) {
 		g.playerIndex = 0
 	}
 
-	// Structural state adjustments
+	events := []GameEvent{
+		{
+			Type:      EventPlayerLeft,
+			Timestamp: time.Now(),
+			Payload: PlayerLeftPayload{
+				PlayerID: removedPlayer.ID,
+				Name:     removedPlayer.Name,
+			},
+		},
+	}
+
+	// If less than 2 players remain → end game
 	if len(g.Players) < 2 {
 		g.State = Ended
-		// End current turn silently
 		if g.CurrentTurn != nil && !g.CurrentTurn.Completed {
 			g.CurrentTurn.Completed = true
 			g.CurrentTurn.Phase = PhaseEnded
 		}
 
-		return []GameEvent{
-			{
-				Type:      EventGameEnded,
-				Timestamp: time.Now(),
-				Payload: GameEndedPayload{
-					Players: g.Players,
-				},
+		events = append(events, GameEvent{
+			Type:      EventGameEnded,
+			Timestamp: time.Now(),
+			Payload: GameEndedPayload{
+				Players: g.Players,
 			},
-		}, nil
+		})
+		return events, nil
 	}
 
-	// If drawer left, properly end turn through domain method
+	// If drawer left, end turn through domain
 	if isDrawer && g.CurrentTurn != nil && !g.CurrentTurn.Completed {
-		return g.EndTurn()
+		turnEvents, err := g.EndTurn()
+		events = append(events, turnEvents...)
+		return events, err
 	}
 
-	return nil, nil
+	return events, nil
 }
