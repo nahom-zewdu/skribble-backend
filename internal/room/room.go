@@ -133,8 +133,12 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 	if r.game.CurrentTurn != nil &&
 		strings.EqualFold(chat.Text, r.game.CurrentTurn.Word) {
 
-		correct, _ := r.game.Guess(sender.ID, chat.Text)
-		if correct {
+		_, err := r.game.Guess(sender.ID, chat.Text)
+		if err != nil {
+			log.Println("Guess error:", err)
+			return
+		}
+		if r.game.CurrentTurn.Guessed[sender.ID] == true {
 			r.broadcastCorrectGuess(sender.Name)
 
 			if r.allGuessed() {
