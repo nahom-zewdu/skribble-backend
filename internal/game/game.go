@@ -59,13 +59,16 @@ type Game struct {
 
 	Players     []*Player
 	playerIndex int
+
+	wordProvider WordProvider
 }
 
 func NewGame() *Game {
 	return &Game{
-		State:    Waiting,
-		MaxTurns: 9,
-		Players:  []*Player{},
+		State:        Waiting,
+		MaxTurns:     9,
+		Players:      []*Player{},
+		wordProvider: NewStaticWordProvider(),
 	}
 }
 
