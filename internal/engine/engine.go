@@ -83,8 +83,3 @@ func (e *Engine) AddPlayer(id, name string) {
 func (e *Engine) RemovePlayer(id string) {
 	e.game.RemovePlayer(id)
 }
-
-// Game returns the current game state.
-func (e *Engine) Game() *game.Game {
-	return e.game
-}
