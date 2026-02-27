@@ -172,7 +172,7 @@ func (r *Room) allGuessed() bool {
 
 // endTurn ends the current turn and starts the next one, broadcasting updates to clients.
 func (r *Room) endTurn() {
-	if err := r.game.EndTurn(); err != nil {
+	if _, err := r.game.EndTurn(); err != nil {
 		r.broadcastSystem("Game ended")
 		return
 	}
