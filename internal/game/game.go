@@ -99,14 +99,6 @@ func (g *Game) AddPlayer(id, name string) ([]GameEvent, error) {
 		},
 	})
 
-	// If game is waiting and we have enough players, start the game
-	if g.State == Waiting && len(g.Players) >= 2 {
-		startEvents, err := g.Start()
-		if err == nil {
-			events = append(events, startEvents...)
-		}
-	}
-
 	return events, nil
 }
 
