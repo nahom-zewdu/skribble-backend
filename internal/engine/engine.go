@@ -55,6 +55,6 @@ func (e *Engine) AddPlayer(id, name string) ([]game.GameEvent, error) {
 }
 
 // RemovePlayer removes a player through the game domain.
-func (e *Engine) RemovePlayer(id string) {
-	e.game.RemovePlayer(id)
+func (e *Engine) RemovePlayer(id string) ([]game.GameEvent, error) {
+	return e.game.RemovePlayer(id)
 }
