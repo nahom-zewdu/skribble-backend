@@ -97,7 +97,7 @@ func (r *Room) onJoin(c *client.Client) {
 
 	events, err := r.engine.AddPlayer(c.ID, c.Name)
 	if err != nil {
-		log.Println("Error adding player:", err)
+		log.Println("engine AddPlayer error:", err)
 		return
 	}
 
