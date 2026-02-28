@@ -75,14 +75,12 @@ func (r *Room) run() {
 
 		case c := <-r.register:
 			r.clients[c.ID] = c
-			r.engine.AddPlayer(c.ID, c.Name)
 			r.onJoin(c)
 
 		case c := <-r.unregister:
 			if _, ok := r.clients[c.ID]; ok {
 				delete(r.clients, c.ID)
 				close(c.Send)
-				r.engine.RemovePlayer(c.ID)
 				r.onLeave(c)
 			}
 
