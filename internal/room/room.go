@@ -97,7 +97,14 @@ func (r *Room) run() {
 func (r *Room) onJoin(c *client.Client) {
 	r.broadcastSystem(c.Name + " joined")
 
-	if len(r.clients) >= 2 && r.engine.Game().State == game.Waiting {
+	events, err := r.engine.AddPlayer(c.ID, c.Name)
+	if err != nil {
+		log.Println("Error adding player:", err)
+		return
+	}
+
+	// If game is waiting and we have enough players, start the game
+	if len(r.clients) >= 2 {
 		events, err := r.engine.Start()
 		if err == nil {
 			r.handleEvents(events)
