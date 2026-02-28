@@ -181,3 +181,8 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 func (g *Game) CanStart() bool {
 	return len(g.Players) >= 2
 }
+
+// Start initializes the game state and starts the first turn.
+func (g *Game) PlayerCount() int {
+	return len(g.Players)
+}
