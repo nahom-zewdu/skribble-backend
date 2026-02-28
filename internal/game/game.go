@@ -89,16 +89,24 @@ func (g *Game) AddPlayer(id, name string) ([]GameEvent, error) {
 
 	g.Players = append(g.Players, player)
 
-	return []GameEvent{
-		{
-			Type:      EventPlayerJoined,
-			Timestamp: time.Now(),
-			Payload: PlayerJoinedPayload{
-				PlayerID: player.ID,
-				Name:     player.Name,
-			},
+	events = append(events, GameEvent{
+		Type:      EventPlayerJoined,
+		Timestamp: time.Now(),
+		Payload: PlayerJoinedPayload{
+			PlayerID: player.ID,
+			Name:     player.Name,
 		},
-	}, nil
+	})
+
+	// If game is waiting and we have enough players, start the game
+	if g.State == Waiting && len(g.Players) >= 2 {
+		startEvents, err := g.Start()
+		if err == nil {
+			events = append(events, startEvents...)
+		}
+	}
+
+	return events, nil
 }
 
 // RemovePlayer removes a player and emits PlayerLeft and potentially GameEnded events.
