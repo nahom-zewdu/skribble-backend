@@ -57,7 +57,7 @@ func (e *Engine) AddPlayer(id, name string) ([]game.GameEvent, error) {
 	}
 
 	// If game is waiting and we have enough players, start the game
-	if e.game.State == game.Waiting && len(e.game.Players) >= 2 {
+	if e.game.CanStart() {
 		startEvents, err := e.game.Start()
 		if err == nil {
 			events = append(events, startEvents...)
