@@ -110,10 +110,11 @@ func (r *Room) onLeave(c *client.Client) {
 
 	events, err := r.engine.RemovePlayer(c.ID)
 	if err != nil {
-		log.Println("Error removing player:", err)
-	} else {
-		r.handleEvents(events)
+		log.Println("engine RemovePlayer error:", err)
+		return
 	}
+
+	r.handleEvents(events)
 }
 
 // onMessage processes incoming messages from clients and routes them to the appropriate handlers.
