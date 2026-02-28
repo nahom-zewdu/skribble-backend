@@ -119,18 +119,11 @@ func (r *Room) onJoin(c *client.Client) {
 func (r *Room) onLeave(c *client.Client) {
 	r.broadcastSystem(c.Name + " left")
 
-	if r.engine.Game().CurrentTurn != nil && c.ID == r.engine.Game().CurrentTurn.DrawerID {
-		events, err := r.engine.EndTurn()
-		if err == nil {
-			r.handleEvents(events)
-		}
-	}
-
-	if len(r.clients) <= 0 {
-		r.engine.UpdateGameState(game.Ended)
-	} else if len(r.clients) < 2 {
-		r.engine.UpdateGameState(game.Waiting)
-		r.broadcastSystem("Not enough players. Waiting for more to join...")
+	events, err := r.engine.RemovePlayer(c.ID)
+	if err != nil {
+		log.Println("Error removing player:", err)
+	} else {
+		r.handleEvents(events)
 	}
 }
 
