@@ -177,9 +177,12 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 	return events, nil
 }
 
-// CanStart checks if the game has enough players to start.
+// CanStart checks if the game can transition from waiting to playing state.
 func (g *Game) CanStart() bool {
-	return len(g.Players) >= 2
+	if g.State == Waiting && len(g.Players) >= 2 {
+		return true
+	}
+	return false
 }
 
 // Start initializes the game state and starts the first turn.
