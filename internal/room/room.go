@@ -139,8 +139,9 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 		}
 
 		events, err := r.engine.SelectWord(sender.ID, data.Word)
-		if err == nil {
-			r.handleEvents(events)
+		if err != nil {
+			log.Println("SelectWord error:", err)
+			return
 		}
 	}
 }
