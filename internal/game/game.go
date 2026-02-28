@@ -176,3 +176,8 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 
 	return events, nil
 }
+
+// CanStart checks if the game has enough players to start.
+func (g *Game) CanStart() bool {
+	return len(g.Players) >= 2
+}
