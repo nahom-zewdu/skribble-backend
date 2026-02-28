@@ -211,8 +211,12 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 		case game.EventCorrectGuess:
 			payload := e.Payload.(game.CorrectGuessPayload)
 
-			name := r.clients[payload.PlayerID].Name
-			r.broadcastCorrectGuess(name)
+			player, ok := r.clients[payload.PlayerID]
+			if !ok {
+				continue
+			}
+
+			r.broadcastCorrectGuess(player.Name)
 
 		case game.EventTurnEnded:
 			payload := e.Payload.(game.TurnEndedPayload)
