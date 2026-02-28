@@ -1,12 +1,10 @@
 // internal/engine/engine.go
-// This file defines the Engine struct, which is responsible for managing the game loop and coordinating game state updates in the Skribble backend.
-// The Engine periodically checks for turn timeouts and triggers appropriate game events to ensure smooth gameplay.
+// Engine manages the game loop and coordinates game state updates in Skribble.
+// It ensures timeouts and game events are processed safely, respecting domain invariants.
 
 package engine
 
 import (
-	"time"
-
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
 )
 
@@ -20,44 +18,43 @@ func New(g *game.Game) *Engine {
 	}
 }
 
-// Tick checks for turn timeouts and triggers game events accordingly.
-// It should be called periodically (e.g., every 250ms) to ensure timely updates.
+// Tick triggers game timeouts and returns any resulting events.
 func (e *Engine) Tick() []game.GameEvent {
 	events, _ := e.game.HandleTimeouts()
 	return events
 }
 
-// Start initiates the game and returns any resulting game events.
+// Start initializes the game via the game domain.
 func (e *Engine) Start() ([]game.GameEvent, error) {
 	return e.game.Start()
 }
 
-// Guess processes a player's guess and returns any resulting game events.
+// Guess processes a player's guess.
 func (e *Engine) Guess(playerID, guess string) ([]game.GameEvent, error) {
 	return e.game.Guess(playerID, guess)
 }
 
-// SelectWord allows the drawer to select a word and returns any resulting game events.
+// SelectWord allows the drawer to select a word.
 func (e *Engine) SelectWord(playerID, word string) ([]game.GameEvent, error) {
 	return e.game.SelectWord(playerID, word)
 }
 
-// AutoSelectWord automatically selects a word for the drawer if they fail to choose within the deadline.
+// AutoSelectWord triggers automatic word selection if deadline exceeded.
 func (e *Engine) AutoSelectWord() ([]game.GameEvent, error) {
 	return e.game.AutoSelectWord()
 }
 
-// EndTurn ends the current turn and returns any resulting game events.
+// EndTurn ends the current turn safely.
 func (e *Engine) EndTurn() ([]game.GameEvent, error) {
 	return e.game.EndTurn()
 }
 
-// AddPlayer adds a new player to the game.
+// AddPlayer adds a player through the game domain.
 func (e *Engine) AddPlayer(id, name string) {
 	e.game.AddPlayer(id, name)
 }
 
-// RemovePlayer removes a player from the game by their ID.
+// RemovePlayer removes a player through the game domain.
 func (e *Engine) RemovePlayer(id string) {
 	e.game.RemovePlayer(id)
 }
