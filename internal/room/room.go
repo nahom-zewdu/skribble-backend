@@ -143,6 +143,8 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 			log.Println("SelectWord error:", err)
 			return
 		}
+
+		r.handleEvents(events)
 	}
 }
 
