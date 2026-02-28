@@ -101,15 +101,6 @@ func (r *Room) onJoin(c *client.Client) {
 		return
 	}
 
-	// If game is waiting and we have enough players, start the game
-	if len(r.clients) >= 2 {
-		events, err := r.engine.Start()
-		if err != nil {
-			log.Println("Error starting game:", err)
-		} else {
-			events = append(events, events...)
-		}
-	}
 	r.handleEvents(events)
 }
 
