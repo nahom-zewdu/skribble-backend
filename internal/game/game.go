@@ -86,6 +86,7 @@ func (g *Game) AddPlayer(id, name string) ([]GameEvent, error) {
 		ID:   id,
 		Name: name,
 	}
+	var events []GameEvent
 
 	g.Players = append(g.Players, player)
 
