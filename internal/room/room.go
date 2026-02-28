@@ -61,7 +61,8 @@ func (r *Room) HandleClientMessage(c *client.Client, msg []byte) {
 	r.incoming <- clientMessage{client: c, message: msg}
 }
 
-// run is the main loop for the room, handling client registration, unregistration, and incoming messages.
+// run is the main loop for the room.
+// It delegates all game-related decisions to the Engine and only reacts to emitted events.
 func (r *Room) run() {
 	ticker := time.NewTicker(250 * time.Millisecond)
 	defer ticker.Stop()
@@ -90,8 +91,7 @@ func (r *Room) run() {
 	}
 }
 
-// Internal Handlers
-// onJoin handles logic when a player joins.
+// onJoin handles player registration and delegates domain updates to the Engine.
 func (r *Room) onJoin(c *client.Client) {
 	r.broadcastSystem(c.Name + " joined")
 
@@ -104,7 +104,7 @@ func (r *Room) onJoin(c *client.Client) {
 	r.handleEvents(events)
 }
 
-// onLeave handles logic when a player disconnects.
+// onLeave handles player removal and delegates domain updates to the Engine.
 func (r *Room) onLeave(c *client.Client) {
 	r.broadcastSystem(c.Name + " left")
 
@@ -117,7 +117,7 @@ func (r *Room) onLeave(c *client.Client) {
 	r.handleEvents(events)
 }
 
-// onMessage processes incoming messages from clients and routes them to the appropriate handlers.
+// onMessage routes incoming client messages to the appropriate Engine command.
 func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	var incoming transport.ClientMessage
 
@@ -148,7 +148,7 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	}
 }
 
-// handleChat processes chat messages and checks for correct guesses.
+// handleChat sends guesses to the Engine and falls back to normal chat broadcast if no domain event is emitted.
 func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 	var chat transport.ChatMessage
 	if err := json.Unmarshal(raw, &chat); err != nil {
@@ -166,11 +166,11 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-	// Normal chat broadcast
+	// Otherwise it's normal chat
 	r.broadcastChat(sender.Name, chat.Text)
 }
 
-// handleEvents routes emitted domain events to clients.
+// handleEvents translates domain GameEvents into transport-level messages.
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
 
@@ -200,7 +200,6 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			}
 
 		case game.EventWordSelected:
-			// do not broadcast actual word to everyone
 			r.broadcastSystem("Word selected. Drawing started.")
 
 		case game.EventCorrectGuess:
@@ -223,7 +222,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 	}
 }
 
-// broadcastChat sends a chat message from a player to all clients in the room.
+// broadcastChat sends a chat message to all clients in the room.
 func (r *Room) broadcastChat(sender, text string) {
 	msg := transport.Message{
 		Type: "chat",
@@ -240,7 +239,7 @@ func (r *Room) broadcastChat(sender, text string) {
 	}
 }
 
-// broadcastCorrectGuess sends a message to all clients indicating that a player has made a correct guess.
+// broadcastCorrectGuess notifies clients that a player guessed correctly.
 func (r *Room) broadcastCorrectGuess(name string) {
 	msg := transport.Message{
 		Type: "correct_guess",
@@ -256,7 +255,7 @@ func (r *Room) broadcastCorrectGuess(name string) {
 	}
 }
 
-// broadcastSystem sends a system message to all clients in the room, typically used for notifications like players joining/leaving or game state changes.
+// broadcastSystem sends a system message to all clients.
 func (r *Room) broadcastSystem(text string) {
 	msg := transport.Message{
 		Type: "system",
@@ -270,7 +269,7 @@ func (r *Room) broadcastSystem(text string) {
 	}
 }
 
-// mustMarshal is a helper function that marshals a value to JSON and logs any errors, returning an empty JSON object if marshalling fails.
+// mustMarshal marshals a value to JSON and logs errors if any.
 func (r *Room) mustMarshal(v interface{}) []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
