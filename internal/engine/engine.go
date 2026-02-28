@@ -50,8 +50,8 @@ func (e *Engine) EndTurn() ([]game.GameEvent, error) {
 }
 
 // AddPlayer adds a player through the game domain.
-func (e *Engine) AddPlayer(id, name string) {
-	e.game.AddPlayer(id, name)
+func (e *Engine) AddPlayer(id, name string) ([]game.GameEvent, error) {
+	return e.game.AddPlayer(id, name)
 }
 
 // RemovePlayer removes a player through the game domain.
