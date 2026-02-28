@@ -23,29 +23,7 @@ func New(g *game.Game) *Engine {
 // Tick checks for turn timeouts and triggers game events accordingly.
 // It should be called periodically (e.g., every 250ms) to ensure timely updates.
 func (e *Engine) Tick() []game.GameEvent {
-	var events []game.GameEvent
-
-	// Word auto-select
-	if e.game.CurrentTurn != nil &&
-		e.game.CurrentTurn.Phase == game.PhaseSelecting &&
-		time.Now().After(e.game.CurrentTurn.SelectionDeadline) {
-
-		ev, _ := e.SelectWord(
-			e.game.CurrentTurn.DrawerID,
-			e.game.CurrentTurn.Choices[0],
-		)
-		events = append(events, ev...)
-	}
-
-	// Play timeout
-	if e.game.CurrentTurn != nil &&
-		e.game.CurrentTurn.Phase == game.PhaseDrawing &&
-		time.Now().After(e.game.CurrentTurn.PlayDeadline) {
-
-		ev, _ := e.EndTurn()
-		events = append(events, ev...)
-	}
-
+	events, _ := e.game.HandleTimeouts()
 	return events
 }
 
