@@ -64,6 +64,13 @@ type Game struct {
 	wordProvider WordProvider
 }
 
+type GameSnapshot struct {
+	State       State         `json:"state"`
+	MaxTurns    int           `json:"maxTurns"`
+	CurrentTurn *TurnSnapshot `json:"currentTurn,omitempty"`
+	Players     []*Player     `json:"players"`
+}
+
 func NewGame() *Game {
 	return &Game{
 		State:        Waiting,
