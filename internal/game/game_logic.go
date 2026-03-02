@@ -245,6 +245,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 			Payload: TurnEndedPayload{
 				TurnNumber: g.CurrentTurn.Number,
 				Word:       g.CurrentTurn.Word,
+				Players:    g.copyPlayers(),
 			},
 		},
 	}
