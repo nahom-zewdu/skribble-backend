@@ -196,6 +196,13 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 			break
 		}
 	}
+	// Drawer gets half points
+	for _, p := range g.Players {
+		if p.ID == g.CurrentTurn.DrawerID {
+			p.Score += score / 2
+			break
+		}
+	}
 
 	event := []GameEvent{
 		{
