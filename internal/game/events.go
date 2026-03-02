@@ -45,6 +45,7 @@ type CorrectGuessPayload struct {
 type TurnEndedPayload struct {
 	TurnNumber int
 	Word       string
+	Players    []*Player
 }
 
 type GameEndedPayload struct {
