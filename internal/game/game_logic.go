@@ -290,7 +290,8 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 
 	// Word selection timeout
 	if g.CurrentTurn.Phase == PhaseSelecting && now.After(g.CurrentTurn.SelectionDeadline) {
-		return g.SelectWord(g.CurrentTurn.DrawerID, g.CurrentTurn.Choices[0])
+		g.CurrentTurn.Word = "" // no word selected
+		return g.EndTurn()
 	}
 
 	// Drawing timeout
