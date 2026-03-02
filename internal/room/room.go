@@ -111,8 +111,6 @@ func (r *Room) onJoin(c *client.Client) {
 
 // onLeave handles player removal and delegates domain updates to the Engine.
 func (r *Room) onLeave(c *client.Client) {
-	r.broadcastSystem(c.Name + " left")
-
 	events, err := r.engine.RemovePlayer(c.ID)
 	if err != nil {
 		log.Println("engine RemovePlayer error:", err)
