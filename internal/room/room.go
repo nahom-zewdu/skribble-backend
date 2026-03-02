@@ -93,8 +93,6 @@ func (r *Room) run() {
 
 // onJoin handles player registration and delegates domain updates to the Engine.
 func (r *Room) onJoin(c *client.Client) {
-	r.broadcastSystem(c.Name + " joined")
-
 	events, err := r.engine.AddPlayer(c.ID, c.Name)
 	if err != nil {
 		log.Println("engine AddPlayer error:", err)
