@@ -183,6 +183,10 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			payload := e.Payload.(game.PlayerJoinedPayload)
 			r.broadcastSystem(payload.Name + " joined")
 
+		case game.EventPlayerLeft:
+			payload := e.Payload.(game.PlayerLeftPayload)
+			r.broadcastSystem(payload.Name + " left")
+
 		case game.EventGameStarted:
 			r.broadcastSystem("Game started")
 
