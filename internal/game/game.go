@@ -54,10 +54,11 @@ type Turn struct {
 }
 
 type Game struct {
-	State           State
-	MaxTurns        int
-	CurrentTurn     *Turn
-	RestartDeadline *time.Time
+	State                  State
+	MaxTurns               int
+	CurrentTurn            *Turn
+	RestartDeadline        *time.Time
+	TurnTransitionDeadline *time.Time
 
 	Players     []*Player
 	playerIndex int
