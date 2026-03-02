@@ -273,11 +273,11 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 		return events, nil
 	}
 
-	nextEvents, err := g.startNextTurn()
-	if err != nil {
-		return events, err
-	}
-	return append(events, nextEvents...), nil
+	// Schedule next turn transition (3 seconds)
+	transition := now.Add(3 * time.Second)
+	g.TurnTransitionDeadline = &transition
+
+	return events, nil
 }
 
 // HandleTimeouts processes word selection and drawing timeouts.
