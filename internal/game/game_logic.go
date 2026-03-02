@@ -96,9 +96,10 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 			Type:      EventTurnStarted,
 			Timestamp: now,
 			Payload: TurnStartedPayload{
-				TurnNumber: turnNumber,
-				DrawerID:   drawer.ID,
-				Choices:    g.CurrentTurn.Choices,
+				TurnNumber:        turnNumber,
+				DrawerID:          drawer.ID,
+				Choices:           g.CurrentTurn.Choices,
+				SelectionDeadline: g.CurrentTurn.SelectionDeadline,
 			},
 		},
 		{
