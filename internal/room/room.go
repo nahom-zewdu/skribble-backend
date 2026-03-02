@@ -91,13 +91,20 @@ func (r *Room) run() {
 	}
 }
 
-// onJoin handles player registration and delegates domain updates to the Engine.
+// onJoin handles new player registration and delegates domain updates to the Engine.
 func (r *Room) onJoin(c *client.Client) {
 	events, err := r.engine.AddPlayer(c.ID, c.Name)
 	if err != nil {
 		log.Println("engine AddPlayer error:", err)
 		return
 	}
+
+	// Send full snapshot to the newly joined player
+	snapshot := r.engine.Snapshot()
+	c.Send <- r.mustMarshal(transport.Message{
+		Type: "game_snapshot",
+		Data: snapshot,
+	})
 
 	r.handleEvents(events)
 }
