@@ -28,6 +28,10 @@ func (g *Game) Start() ([]GameEvent, error) {
 		return nil, nil
 	}
 
+	if !g.CanStart() {
+		return nil, errors.New("game cannot start yet")
+	}
+
 	g.State = Playing
 	g.playerIndex = 0
 
