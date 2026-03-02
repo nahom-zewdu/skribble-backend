@@ -256,7 +256,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 			Type:      EventGameEnded,
 			Timestamp: now,
 			Payload: GameEndedPayload{
-				Players: g.Players,
+				Players: g.copyPlayers(),
 			},
 		})
 		return events, nil
@@ -322,4 +322,14 @@ func (g *Game) Reset() {
 	for _, p := range g.Players {
 		p.Score = 0
 	}
+}
+
+// copyPlayers creates a deep copy of the players slice to prevent external mutation.
+func (g *Game) copyPlayers() []*Player {
+	copied := make([]*Player, len(g.Players))
+	for i, p := range g.Players {
+		cp := *p
+		copied[i] = &cp
+	}
+	return copied
 }
