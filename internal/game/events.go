@@ -52,7 +52,8 @@ type TurnEndedPayload struct {
 }
 
 type GameEndedPayload struct {
-	Players []*Player
+	Players     []*Player
+	RestartTime time.Time `json:"restartTime"`
 }
 
 type PlayerJoinedPayload struct {
