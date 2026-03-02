@@ -225,7 +225,17 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 
 		case game.EventTurnEnded:
 			payload := e.Payload.(game.TurnEndedPayload)
-			r.broadcastSystem("Turn ended. Word was: " + payload.Word)
+
+			msg := transport.Message{
+				Type: "turn_ended",
+				Data: payload,
+			}
+
+			data := r.mustMarshal(msg)
+
+			for _, c := range r.clients {
+				c.Send <- data
+			}
 
 		case game.EventGameEnded:
 			r.broadcastSystem("Game ended")
