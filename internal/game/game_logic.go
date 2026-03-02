@@ -282,3 +282,16 @@ func (g *Game) MaskedWord() string {
 	}
 	return mask
 }
+
+// AllGuessersFinished checks if all guessers have guessed correctly.
+func (g *Game) AllGuessersFinished() bool {
+	if g.CurrentTurn == nil {
+		return false
+	}
+	for _, p := range g.Players {
+		if p.ID != g.CurrentTurn.DrawerID && !g.CurrentTurn.Guessed[p.ID] {
+			return false
+		}
+	}
+	return true
+}
