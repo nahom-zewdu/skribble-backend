@@ -32,6 +32,8 @@ func (g *Game) Start() ([]GameEvent, error) {
 		return nil, errors.New("game cannot start yet")
 	}
 
+	g.Reset() // Ensure game is reset before starting
+
 	g.State = Playing
 	g.playerIndex = 0
 
@@ -311,4 +313,13 @@ func (g *Game) AllGuessersFinished() bool {
 		}
 	}
 	return true
+}
+
+// Reset clears the game state for a new game while keeping players.
+func (g *Game) Reset() {
+	g.State = Waiting
+	g.CurrentTurn = nil
+	for _, p := range g.Players {
+		p.Score = 0
+	}
 }
