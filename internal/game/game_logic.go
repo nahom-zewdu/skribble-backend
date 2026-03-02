@@ -143,8 +143,9 @@ func (g *Game) SelectWord(playerID, word string) ([]GameEvent, error) {
 			Type:      EventWordSelected,
 			Timestamp: now,
 			Payload: WordSelectedPayload{
-				DrawerID: playerID,
-				Word:     word,
+				DrawerID:     playerID,
+				Word:         word,
+				PlayDeadline: g.CurrentTurn.PlayDeadline,
 			},
 		},
 	}, nil
