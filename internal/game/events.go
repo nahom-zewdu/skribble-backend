@@ -34,8 +34,9 @@ type TurnStartedPayload struct {
 }
 
 type WordSelectedPayload struct {
-	DrawerID string
-	Word     string
+	DrawerID     string
+	Word         string
+	PlayDeadline time.Time `json:"playDeadline"`
 }
 
 type CorrectGuessPayload struct {
