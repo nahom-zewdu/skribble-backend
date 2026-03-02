@@ -333,3 +333,24 @@ func (g *Game) copyPlayers() []*Player {
 	}
 	return copied
 }
+
+// Snapshot returns a read-only snapshot of the current game state for transport.
+func (g *Game) Snapshot() GameSnapshot {
+	var turn *TurnSnapshot
+
+	if g.CurrentTurn != nil {
+		turn = &TurnSnapshot{
+			Number:     g.CurrentTurn.Number,
+			DrawerID:   g.CurrentTurn.DrawerID,
+			Phase:      g.CurrentTurn.Phase,
+			MaskedWord: g.MaskedWord(),
+		}
+	}
+
+	return GameSnapshot{
+		State:       g.State,
+		MaxTurns:    g.MaxTurns,
+		CurrentTurn: turn,
+		Players:     g.copyPlayers(),
+	}
+}
