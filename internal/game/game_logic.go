@@ -197,7 +197,7 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 		}
 	}
 
-	return []GameEvent{
+	event := []GameEvent{
 		{
 			Type:      EventCorrectGuess,
 			Timestamp: time.Now(),
@@ -206,7 +206,17 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 				Score:    score,
 			},
 		},
-	}, nil
+	}
+
+	// Check if all guessers have finished
+	if g.AllGuessersFinished() {
+		endEvents, err := g.EndTurn()
+		if err == nil {
+			event = append(event, endEvents...)
+		}
+	}
+
+	return event, nil
 }
 
 // EndTurn marks the current turn as completed and starts next turn or ends game.
