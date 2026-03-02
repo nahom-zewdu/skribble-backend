@@ -240,6 +240,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 	g.CurrentTurn.Phase = PhaseEnded
 
 	now := time.Now()
+	transitionDeadline := now.Add(3 * time.Second)
 	events := []GameEvent{
 		{
 			Type:      EventTurnEnded,
