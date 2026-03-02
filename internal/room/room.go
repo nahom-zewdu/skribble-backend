@@ -179,6 +179,10 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 
 		switch e.Type {
 
+		case game.EventPlayerJoined:
+			payload := e.Payload.(game.PlayerJoinedPayload)
+			r.broadcastSystem(payload.Name + " joined")
+
 		case game.EventGameStarted:
 			r.broadcastSystem("Game started")
 
