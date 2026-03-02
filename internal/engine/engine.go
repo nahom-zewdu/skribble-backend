@@ -68,3 +68,8 @@ func (e *Engine) AddPlayer(id, name string) ([]game.GameEvent, error) {
 func (e *Engine) RemovePlayer(id string) ([]game.GameEvent, error) {
 	return e.game.RemovePlayer(id)
 }
+
+// Snapshot returns a read-only snapshot of the current game state.
+func (e *Engine) Snapshot() game.GameSnapshot {
+	return e.game.Snapshot()
+}
