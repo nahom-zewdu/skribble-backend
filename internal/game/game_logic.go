@@ -307,6 +307,15 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		}
 	}
 
+	// Handle turn transition after turn end
+	if g.State == Playing &&
+		g.TurnTransitionDeadline != nil &&
+		time.Now().After(*g.TurnTransitionDeadline) {
+
+		g.TurnTransitionDeadline = nil
+		return g.startNextTurn()
+	}
+
 	return nil, nil
 }
 
