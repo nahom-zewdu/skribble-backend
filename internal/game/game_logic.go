@@ -261,7 +261,8 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 			Type:      EventGameEnded,
 			Timestamp: now,
 			Payload: GameEndedPayload{
-				Players: g.copyPlayers(),
+				Players:     g.copyPlayers(),
+				RestartTime: time.Now().Add(5 * time.Second),
 			},
 		})
 		return events, nil
