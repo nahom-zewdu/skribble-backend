@@ -60,13 +60,16 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 	}
 
 	if g.CurrentTurn != nil && g.CurrentTurn.Number >= g.MaxTurns {
+		restart := time.Now().Add(5 * time.Second)
+		g.RestartDeadline = &restart
 		g.State = Ended
 		return []GameEvent{
 			{
 				Type:      EventGameEnded,
 				Timestamp: time.Now(),
 				Payload: GameEndedPayload{
-					Players: g.Players,
+					Players:     g.Players,
+					RestartTime: restart,
 				},
 			},
 		}, errors.New("game ended")
@@ -256,13 +259,15 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 
 	// If less than 2 players remain end game
 	if len(g.Players) < 2 {
+		restart := time.Now().Add(5 * time.Second)
+		g.RestartDeadline = &restart
 		g.State = Ended
 		events = append(events, GameEvent{
 			Type:      EventGameEnded,
 			Timestamp: now,
 			Payload: GameEndedPayload{
 				Players:     g.copyPlayers(),
-				RestartTime: time.Now().Add(5 * time.Second),
+				RestartTime: restart,
 			},
 		})
 		return events, nil
