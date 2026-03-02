@@ -245,9 +245,10 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 			Type:      EventTurnEnded,
 			Timestamp: now,
 			Payload: TurnEndedPayload{
-				TurnNumber: g.CurrentTurn.Number,
-				Word:       g.CurrentTurn.Word,
-				Players:    g.copyPlayers(),
+				TurnNumber:        g.CurrentTurn.Number,
+				Word:              g.CurrentTurn.Word,
+				Players:           g.copyPlayers(),
+				NextTurnStartTIme: transitionDeadline,
 			},
 		},
 	}
