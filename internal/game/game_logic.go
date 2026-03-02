@@ -298,6 +298,15 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		return g.EndTurn()
 	}
 
+	// Handle automatic game restart
+	if g.State == Ended && g.RestartDeadline != nil && g.CurrentTurn.Number == g.MaxTurns {
+		if time.Now().After(*g.RestartDeadline) {
+			g.RestartDeadline = nil
+			g.Reset()
+			return g.Start()
+		}
+	}
+
 	return nil, nil
 }
 
