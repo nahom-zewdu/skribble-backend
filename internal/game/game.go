@@ -71,6 +71,13 @@ type GameSnapshot struct {
 	Players     []*Player     `json:"players"`
 }
 
+type TurnSnapshot struct {
+	Number     int       `json:"number"`
+	DrawerID   string    `json:"drawerId"`
+	Phase      TurnPhase `json:"phase"`
+	MaskedWord string    `json:"maskedWord"`
+}
+
 func NewGame() *Game {
 	return &Game{
 		State:        Waiting,
