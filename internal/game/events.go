@@ -27,9 +27,10 @@ type GameEvent struct {
 }
 
 type TurnStartedPayload struct {
-	TurnNumber int
-	DrawerID   string
-	Choices    []string
+	TurnNumber        int
+	DrawerID          string
+	Choices           []string
+	SelectionDeadline time.Time `json:"selectionDeadline"`
 }
 
 type WordSelectedPayload struct {
