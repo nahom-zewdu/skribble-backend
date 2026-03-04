@@ -373,12 +373,25 @@ func (g *Game) copyPlayers() []*Player {
 	return copied
 }
 
+// PlayerSnapshot returns a read-only snapshot of the current players for transport.
+func (g *Game) PlayerSnapshot() []PlayerSnapshot {
+	snapshot := make([]PlayerSnapshot, len(g.Players))
+	for i, p := range g.Players {
+		snapshot[i] = PlayerSnapshot{
+			ID:    p.ID,
+			Name:  p.Name,
+			Score: p.Score,
+		}
+	}
+	return snapshot
+}
+
 // Snapshot returns a read-only snapshot of the current game state for transport.
 func (g *Game) Snapshot() GameSnapshot {
 	snap := GameSnapshot{
 		State:    g.State,
 		MaxTurns: g.MaxTurns,
-		Players:  g.copyPlayers(),
+		Players:  g.PlayerSnapshot(),
 	}
 
 	if g.CurrentTurn != nil {
