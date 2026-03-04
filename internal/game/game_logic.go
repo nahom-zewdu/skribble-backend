@@ -110,7 +110,7 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 			},
 		},
 		{
-			Type:      EventWordSelectionStart,
+			Type:      EventWordSelectionStarted,
 			Timestamp: now,
 			Payload: WordSelectionStartedPayload{
 				DrawerID: drawer.ID,
