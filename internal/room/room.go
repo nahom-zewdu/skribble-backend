@@ -196,7 +196,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			for _, c := range r.clients {
 				if c.ID == payload.DrawerID {
 					c.Send <- r.mustMarshal(transport.Message{
-						Type: "your_turn",
+						Type: "turn_started",
 						Data: payload,
 					})
 				} else {
