@@ -8,16 +8,18 @@ import "time"
 
 type EventType string
 
+// Event types for the game
 const (
-	EventGameStarted        EventType = "game_started"
-	EventTurnStarted        EventType = "turn_started"
-	EventWordSelectionStart EventType = "word_selection_started"
-	EventWordSelected       EventType = "word_selected"
-	EventCorrectGuess       EventType = "correct_guess"
-	EventTurnEnded          EventType = "turn_ended"
-	EventGameEnded          EventType = "game_ended"
-	EventPlayerJoined       EventType = "player_joined"
-	EventPlayerLeft         EventType = "player_left"
+	EventGameStarted          EventType = "game_started"
+	EventTurnStarted          EventType = "turn_started"
+	EventWordSelectionStart   EventType = "word_selection_started"
+	EventWordSelected         EventType = "word_selected"
+	EventCorrectGuess         EventType = "correct_guess"
+	EventTurnEnded            EventType = "turn_ended"
+	EventGameEnded            EventType = "game_ended"
+	EventPlayerJoined         EventType = "player_joined"
+	EventPlayerLeft           EventType = "player_left"
+	EventWordSelectionStarted EventType = "word_selection_started"
 )
 
 type GameEvent struct {
