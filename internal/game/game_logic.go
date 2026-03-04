@@ -375,28 +375,31 @@ func (g *Game) copyPlayers() []*Player {
 
 // Snapshot returns a read-only snapshot of the current game state for transport.
 func (g *Game) Snapshot() GameSnapshot {
-	var turn *TurnSnapshot
+	snap := GameSnapshot{
+		State:    g.State,
+		MaxTurns: g.MaxTurns,
+		Players:  g.copyPlayers(),
+	}
 
 	if g.CurrentTurn != nil {
-		turn = &TurnSnapshot{
-			Number:     g.CurrentTurn.Number,
-			DrawerID:   g.CurrentTurn.DrawerID,
-			Phase:      g.CurrentTurn.Phase,
-			MaskedWord: g.MaskedWord(),
+		snap.TurnNumber = g.CurrentTurn.Number
+		snap.DrawerID = g.CurrentTurn.DrawerID
+		snap.Phase = g.CurrentTurn.Phase
+		snap.MaskedWord = g.MaskedWord()
+
+		if !g.CurrentTurn.SelectionDeadline.IsZero() {
+			d := g.CurrentTurn.SelectionDeadline
+			snap.SelectionDeadline = &d
+		}
+
+		if !g.CurrentTurn.PlayDeadline.IsZero() {
+			d := g.CurrentTurn.PlayDeadline
+			snap.PlayDeadline = &d
 		}
 	}
 
-	return GameSnapshot{
-		State:              g.State,
-		MaxTurns:           g.MaxTurns,
-		TurnNumber:         turn.Number,
-		DrawerID:           turn.DrawerID,
-		Phase:              turn.Phase,
-		Players:            g.copyPlayers(),
-		MaskedWord:         turn.MaskedWord,
-		SelectionDeadline:  &g.CurrentTurn.SelectionDeadline,
-		PlayDeadline:       &g.CurrentTurn.PlayDeadline,
-		TransitionDeadline: g.TurnTransitionDeadline,
-		RestartDeadline:    g.RestartDeadline,
-	}
+	snap.TransitionDeadline = g.TurnTransitionDeadline
+	snap.RestartDeadline = g.RestartDeadline
+
+	return snap
 }
