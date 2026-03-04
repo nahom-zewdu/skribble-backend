@@ -88,13 +88,6 @@ type GameSnapshot struct {
 	RestartDeadline    *time.Time
 }
 
-type TurnSnapshot struct {
-	Number     int       `json:"number"`
-	DrawerID   string    `json:"drawerId"`
-	Phase      TurnPhase `json:"phase"`
-	MaskedWord string    `json:"maskedWord"`
-}
-
 func NewGame() *Game {
 	return &Game{
 		State:        Waiting,
