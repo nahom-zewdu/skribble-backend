@@ -67,3 +67,9 @@ type PlayerLeftPayload struct {
 	PlayerID string
 	Name     string
 }
+
+type WordSelectionStartedPayload struct {
+	DrawerID string
+	Choices  []string
+	Deadline time.Time
+}
