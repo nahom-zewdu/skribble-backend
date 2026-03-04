@@ -78,7 +78,7 @@ type GameSnapshot struct {
 	MaxTurns   int
 	DrawerID   string
 	Phase      TurnPhase
-	Players    []*PlayerSnapshot
+	Players    []PlayerSnapshot
 
 	MaskedWord string
 
