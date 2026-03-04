@@ -12,7 +12,6 @@ type EventType string
 const (
 	EventGameStarted          EventType = "game_started"
 	EventTurnStarted          EventType = "turn_started"
-	EventWordSelectionStart   EventType = "word_selection_started"
 	EventWordSelected         EventType = "word_selected"
 	EventCorrectGuess         EventType = "correct_guess"
 	EventTurnEnded            EventType = "turn_ended"
