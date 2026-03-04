@@ -48,12 +48,12 @@ type CorrectGuessPayload struct {
 type TurnEndedPayload struct {
 	TurnNumber        int
 	Word              string
-	Players           []*Player
+	Players           []PlayerSnapshot
 	NextTurnStartTIme time.Time
 }
 
 type GameEndedPayload struct {
-	Players     []*Player
+	Players     []PlayerSnapshot
 	RestartTime time.Time `json:"restartTime"`
 }
 
