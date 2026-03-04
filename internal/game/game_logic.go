@@ -389,9 +389,16 @@ func (g *Game) Snapshot() GameSnapshot {
 	}
 
 	return GameSnapshot{
-		State:       g.State,
-		MaxTurns:    g.MaxTurns,
-		CurrentTurn: turn,
-		Players:     g.copyPlayers(),
+		State:              g.State,
+		MaxTurns:           g.MaxTurns,
+		TurnNumber:         turn.Number,
+		DrawerID:           turn.DrawerID,
+		Phase:              turn.Phase,
+		Players:            g.copyPlayers(),
+		MaskedWord:         turn.MaskedWord,
+		SelectionDeadline:  &g.CurrentTurn.SelectionDeadline,
+		PlayDeadline:       &g.CurrentTurn.PlayDeadline,
+		TransitionDeadline: g.TurnTransitionDeadline,
+		RestartDeadline:    g.RestartDeadline,
 	}
 }
