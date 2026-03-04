@@ -69,7 +69,7 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 				Type:      EventGameEnded,
 				Timestamp: time.Now(),
 				Payload: GameEndedPayload{
-					Players:     g.Players,
+					Players:     g.PlayerSnapshot(),
 					RestartTime: restart,
 				},
 			},
@@ -260,7 +260,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 			Payload: TurnEndedPayload{
 				TurnNumber:        g.CurrentTurn.Number,
 				Word:              g.CurrentTurn.Word,
-				Players:           g.copyPlayers(),
+				Players:           g.PlayerSnapshot(),
 				NextTurnStartTIme: transitionDeadline,
 			},
 		},
@@ -275,7 +275,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 			Type:      EventGameEnded,
 			Timestamp: now,
 			Payload: GameEndedPayload{
-				Players:     g.copyPlayers(),
+				Players:     g.PlayerSnapshot(),
 				RestartTime: restart,
 			},
 		})
