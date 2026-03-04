@@ -67,10 +67,19 @@ type Game struct {
 }
 
 type GameSnapshot struct {
-	State       State         `json:"state"`
-	MaxTurns    int           `json:"maxTurns"`
-	CurrentTurn *TurnSnapshot `json:"currentTurn,omitempty"`
-	Players     []*Player     `json:"players"`
+	State      State
+	TurnNumber int
+	MaxTurns   int
+	DrawerID   string
+	Phase      TurnPhase
+	Players    []*Player
+
+	MaskedWord string
+
+	SelectionDeadline  *time.Time
+	PlayDeadline       *time.Time
+	TransitionDeadline *time.Time
+	RestartDeadline    *time.Time
 }
 
 type TurnSnapshot struct {
