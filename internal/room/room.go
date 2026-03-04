@@ -232,7 +232,26 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			}
 
 		case game.EventWordSelected:
-			r.broadcastSystem("Word selected. Drawing started.")
+			payload := e.Payload.(game.WordSelectedPayload)
+
+			for _, c := range r.clients {
+				if c.ID == payload.DrawerID {
+					c.Send <- r.mustMarshal(transport.Message{
+						Type: "drawing_started",
+						Data: map[string]interface{}{
+							"word":     payload.Word,
+							"deadline": payload.PlayDeadline,
+						},
+					})
+				} else {
+					c.Send <- r.mustMarshal(transport.Message{
+						Type: "drawing_started",
+						Data: map[string]interface{}{
+							"deadline": payload.PlayDeadline,
+						},
+					})
+				}
+			}
 
 		case game.EventCorrectGuess:
 			payload := e.Payload.(game.CorrectGuessPayload)
