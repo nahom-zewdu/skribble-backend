@@ -192,7 +192,7 @@ func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
 			Type:      EventGameEnded,
 			Timestamp: time.Now(),
 			Payload: GameEndedPayload{
-				Players: g.Players,
+				Players: g.PlayerSnapshot(),
 			},
 		})
 		return events, nil
