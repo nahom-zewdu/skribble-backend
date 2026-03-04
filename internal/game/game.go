@@ -66,6 +66,12 @@ type Game struct {
 	wordProvider WordProvider
 }
 
+type PlayerSnapshot struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Score int    `json:"score"`
+}
+
 type GameSnapshot struct {
 	State      State
 	TurnNumber int
