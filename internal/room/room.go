@@ -256,12 +256,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 		case game.EventCorrectGuess:
 			payload := e.Payload.(game.CorrectGuessPayload)
 
-			player, ok := r.clients[payload.PlayerID]
-			if !ok {
-				continue
-			}
-
-			r.broadcastCorrectGuess(player.Name)
+			r.broadcastCorrectGuess(payload)
 
 		case game.EventTurnEnded:
 			payload := e.Payload.(game.TurnEndedPayload)
@@ -312,11 +307,12 @@ func (r *Room) broadcastChat(sender, text string) {
 }
 
 // broadcastCorrectGuess notifies clients that a player guessed correctly.
-func (r *Room) broadcastCorrectGuess(name string) {
+func (r *Room) broadcastCorrectGuess(guessPayload game.CorrectGuessPayload) {
 	msg := transport.Message{
 		Type: "correct_guess",
 		Data: map[string]interface{}{
-			"player": name,
+			"player": guessPayload.PlayerID,
+			"score":  guessPayload.Score,
 		},
 	}
 
