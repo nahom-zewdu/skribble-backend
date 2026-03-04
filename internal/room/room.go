@@ -278,7 +278,18 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			}
 
 		case game.EventGameEnded:
-			r.broadcastSystem("Game ended")
+			payload := e.Payload.(game.GameEndedPayload)
+
+			msg := transport.Message{
+				Type: "game_ended",
+				Data: payload,
+			}
+
+			data := r.mustMarshal(msg)
+
+			for _, c := range r.clients {
+				c.Send <- data
+			}
 		}
 	}
 }
