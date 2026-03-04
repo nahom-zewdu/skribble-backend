@@ -59,6 +59,7 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		return nil, errors.New("not enough players to continue")
 	}
 
+	// If max turns reached, end game
 	if g.CurrentTurn != nil && g.CurrentTurn.Number >= g.MaxTurns {
 		restart := time.Now().Add(5 * time.Second)
 		g.RestartDeadline = &restart
@@ -75,17 +76,20 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		}, errors.New("game ended")
 	}
 
+	// Select next drawer in round-robin fashion
 	drawer := g.Players[g.playerIndex%len(g.Players)]
 	turnNumber := 1
 	if g.CurrentTurn != nil {
 		turnNumber = g.CurrentTurn.Number + 1
 	}
 
+	// Initialize new turn
 	now := time.Now()
+	choices := g.wordProvider.GenerateChoices(3)
 	g.CurrentTurn = &Turn{
 		Number:            turnNumber,
 		DrawerID:          drawer.ID,
-		Choices:           g.wordProvider.GenerateChoices(3),
+		Choices:           choices,
 		Phase:             PhaseSelecting,
 		SelectionDeadline: now.Add(10 * time.Second),
 		Guessed:           make(map[string]bool),
@@ -108,6 +112,13 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		{
 			Type:      EventWordSelectionStart,
 			Timestamp: now,
+			Payload: WordSelectionStartedPayload{
+				DrawerID: drawer.ID,
+				Choices:  choices,
+				Deadline: g.CurrentTurn.SelectionDeadline,
+				// Note: Deadline is included here for clients to show selection timer, but actual enforcement is in HandleTimeouts()
+				// This ensures that even if a client misses the deadline, the game will skip to the next turn without relying on client-side timers.
+			},
 		},
 	}, nil
 }
