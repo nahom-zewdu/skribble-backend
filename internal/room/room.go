@@ -194,21 +194,12 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			payload := e.Payload.(game.TurnStartedPayload)
 
 			for _, c := range r.clients {
-				if c.ID == payload.DrawerID {
-					c.Send <- r.mustMarshal(transport.Message{
-						Type: "turn_started",
-						Data: payload,
-					})
-				} else {
-					c.Send <- r.mustMarshal(transport.Message{
-						Type: "turn_started",
-						Data: map[string]interface{}{
-							"turn":   payload.TurnNumber,
-							"drawer": payload.DrawerID,
-						},
-					})
-				}
+				c.Send <- r.mustMarshal(transport.Message{
+					Type: "turn_started",
+					Data: payload,
+				})
 			}
+
 		case game.EventWordSelectionStarted:
 			payload := e.Payload.(game.WordSelectionStartedPayload)
 
