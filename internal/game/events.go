@@ -47,7 +47,7 @@ type TurnEndedPayload struct {
 	TurnNumber        int
 	Word              string
 	Players           []PlayerSnapshot
-	NextTurnStartTIme time.Time
+	NextTurnStartTime time.Time
 }
 
 type GameEndedPayload struct {
