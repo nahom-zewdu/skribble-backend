@@ -261,7 +261,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 				TurnNumber:        g.CurrentTurn.Number,
 				Word:              g.CurrentTurn.Word,
 				Players:           g.PlayerSnapshot(),
-				NextTurnStartTIme: transitionDeadline,
+				NextTurnStartTime: transitionDeadline,
 			},
 		},
 	}
