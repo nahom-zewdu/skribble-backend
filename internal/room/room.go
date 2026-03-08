@@ -206,10 +206,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			for _, c := range r.clients {
 				c.Send <- r.mustMarshal(transport.Message{
 					Type: "word_selection_started",
-					Data: map[string]interface{}{
-						"choices":  payload.Choices,
-						"deadline": payload.Deadline,
-					},
+					Data: payload,
 				})
 			}
 
