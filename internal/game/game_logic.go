@@ -363,16 +363,6 @@ func (g *Game) Reset() {
 	}
 }
 
-// copyPlayers creates a deep copy of the players slice to prevent external mutation.
-func (g *Game) copyPlayers() []*Player {
-	copied := make([]*Player, len(g.Players))
-	for i, p := range g.Players {
-		cp := *p
-		copied[i] = &cp
-	}
-	return copied
-}
-
 // PlayerSnapshot returns a read-only snapshot of the current players for transport.
 func (g *Game) PlayerSnapshot() []PlayerSnapshot {
 	snapshot := make([]PlayerSnapshot, len(g.Players))
