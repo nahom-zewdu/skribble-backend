@@ -310,10 +310,7 @@ func (r *Room) broadcastChat(sender, text string) {
 func (r *Room) broadcastCorrectGuess(guessPayload game.CorrectGuessPayload) {
 	msg := transport.Message{
 		Type: "correct_guess",
-		Data: map[string]interface{}{
-			"player": guessPayload.PlayerID,
-			"score":  guessPayload.Score,
-		},
+		Data: guessPayload,
 	}
 
 	payload := r.mustMarshal(msg)
