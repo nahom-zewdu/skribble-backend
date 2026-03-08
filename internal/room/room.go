@@ -247,7 +247,8 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 					c.Send <- r.mustMarshal(transport.Message{
 						Type: "drawing_started",
 						Data: map[string]interface{}{
-							"deadline": payload.PlayDeadline,
+							"deadline":   payload.PlayDeadline,
+							"maskedWord": payload.Word, // Note: this will be masked (e.g. "_ _ _ _")
 						},
 					})
 				}
