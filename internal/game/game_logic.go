@@ -309,7 +309,7 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 	}
 
 	// Handle automatic game restart
-	if g.State == Ended && g.RestartDeadline != nil && g.CurrentTurn.Number == g.MaxTurns {
+	if g.State == Ended && g.RestartDeadline != nil {
 		if time.Now().After(*g.RestartDeadline) {
 			g.RestartDeadline = nil
 			g.Reset()
