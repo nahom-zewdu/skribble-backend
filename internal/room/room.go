@@ -101,6 +101,7 @@ func (r *Room) onJoin(c *client.Client) {
 
 	// Send full snapshot to the newly joined player
 	snapshot := r.engine.Snapshot()
+	snapshot.SelfID = c.ID // Include SelfID in the snapshot for client-side logic
 	c.Send <- r.mustMarshal(transport.Message{
 		Type: "game_snapshot",
 		Data: snapshot,
