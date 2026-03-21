@@ -79,6 +79,7 @@ type GameSnapshot struct {
 	DrawerID   string
 	Phase      TurnPhase
 	Players    []PlayerSnapshot
+	SelfID     string
 
 	MaskedWord string
 
