@@ -237,6 +237,17 @@ func (r *Room) handleDrawEnd(sender *client.Client) {
 	})
 }
 
+// handleClearCanvas processes a canvas clear action from the drawer and broadcasts it to other clients.
+func (r *Room) handleClearCanvas(sender *client.Client) {
+	if !r.isDrawer(sender.ID) {
+		return
+	}
+
+	r.broadcastDraw("clear_canvas", map[string]interface{}{
+		"senderID": sender.ID,
+	})
+}
+
 // handleEvents translates domain GameEvents into transport-level messages.
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
