@@ -149,6 +149,18 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 		}
 
 		r.handleEvents(events)
+
+	case "draw_start":
+		r.handleDrawStart(sender, incoming.Data)
+
+	case "draw_move":
+		r.handleDrawMove(sender, incoming.Data)
+
+	case "draw_end":
+		r.handleDrawEnd(sender)
+
+	case "clear_canvas":
+		r.handleClearCanvas(sender)
 	}
 }
 
