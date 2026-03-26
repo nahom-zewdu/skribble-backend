@@ -73,3 +73,11 @@ func (e *Engine) RemovePlayer(id string) ([]game.GameEvent, error) {
 func (e *Engine) Snapshot() game.GameSnapshot {
 	return e.game.Snapshot()
 }
+
+// CurrentDrawerID returns the ID of the current drawer, or empty string if no active turn.
+func (e *Engine) CurrentDrawerID() string {
+	if e.game.CurrentTurn == nil {
+		return ""
+	}
+	return e.game.CurrentTurn.DrawerID
+}
