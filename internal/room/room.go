@@ -204,6 +204,28 @@ func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
 	})
 }
 
+// handleDrawMove processes drawing movements from the drawer and broadcasts them to other clients.
+func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
+	if !r.isDrawer(sender.ID) {
+		return
+	}
+
+	var data transport.DrawMove
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return
+	}
+
+	// ⚠️ Guard against abuse (VERY important)
+	if len(data.Points) > 100 {
+		return
+	}
+
+	r.broadcastDraw("draw_move", map[string]interface{}{
+		"points":   data.Points,
+		"senderID": sender.ID,
+	})
+}
+
 // handleEvents translates domain GameEvents into transport-level messages.
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
