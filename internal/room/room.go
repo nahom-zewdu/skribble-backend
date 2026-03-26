@@ -226,6 +226,17 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 	})
 }
 
+// handleDrawEnd processes the end of a drawing action and broadcasts it to other clients.
+func (r *Room) handleDrawEnd(sender *client.Client) {
+	if !r.isDrawer(sender.ID) {
+		return
+	}
+
+	r.broadcastDraw("draw_end", map[string]interface{}{
+		"senderID": sender.ID,
+	})
+}
+
 // handleEvents translates domain GameEvents into transport-level messages.
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
