@@ -248,6 +248,20 @@ func (r *Room) handleClearCanvas(sender *client.Client) {
 	})
 }
 
+// broadcastDraw sends drawing-related messages to all clients in the room.
+func (r *Room) broadcastDraw(eventType string, data interface{}) {
+	msg := transport.Message{
+		Type: eventType,
+		Data: data,
+	}
+
+	payload := r.mustMarshal(msg)
+
+	for _, c := range r.clients {
+		c.Send <- payload
+	}
+}
+
 // handleEvents translates domain GameEvents into transport-level messages.
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
