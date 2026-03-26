@@ -201,7 +201,7 @@ func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-	r.broadcastDraw("draw_start", map[string]interface{}{
+	r.broadcastDraw(sender.ID, "draw_start", map[string]interface{}{
 		"x":        data.X,
 		"y":        data.Y,
 		"senderID": sender.ID,
@@ -235,7 +235,7 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 		}
 	}
 
-	r.broadcastDraw("draw_move", map[string]interface{}{
+	r.broadcastDraw(sender.ID, "draw_move", map[string]interface{}{
 		"points":   data.Points,
 		"senderID": sender.ID,
 	})
@@ -251,7 +251,7 @@ func (r *Room) handleDrawEnd(sender *client.Client) {
 		return
 	}
 
-	r.broadcastDraw("draw_end", map[string]interface{}{
+	r.broadcastDraw(sender.ID, "draw_end", map[string]interface{}{
 		"senderID": sender.ID,
 	})
 }
@@ -266,13 +266,13 @@ func (r *Room) handleClearCanvas(sender *client.Client) {
 		return
 	}
 
-	r.broadcastDraw("clear_canvas", map[string]interface{}{
+	r.broadcastDraw(sender.ID, "clear_canvas", map[string]interface{}{
 		"senderID": sender.ID,
 	})
 }
 
-// broadcastDraw sends drawing-related messages to all clients in the room.
-func (r *Room) broadcastDraw(eventType string, data interface{}) {
+// broadcastDraw sends drawing-related messages to all clients except the sender in the room.
+func (r *Room) broadcastDraw(senderID, eventType string, data interface{}) {
 
 	msg := transport.Message{
 		Type: eventType,
@@ -282,6 +282,9 @@ func (r *Room) broadcastDraw(eventType string, data interface{}) {
 	payload := r.mustMarshal(msg)
 
 	for _, c := range r.clients {
+		if c.ID == senderID {
+			continue
+		}
 		c.Send <- payload
 	}
 }
