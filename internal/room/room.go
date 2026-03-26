@@ -188,7 +188,7 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 
 // handleDrawStart processes the start of a drawing action from the drawer and broadcasts it to other clients.
 func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
-	if !r.isDrawer(sender.ID) {
+	if r.engine.CurrentDrawerID() != sender.ID {
 		return
 	}
 
@@ -206,7 +206,7 @@ func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
 
 // handleDrawMove processes drawing movements from the drawer and broadcasts them to other clients.
 func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
-	if !r.isDrawer(sender.ID) {
+	if r.engine.CurrentDrawerID() != sender.ID {
 		return
 	}
 
@@ -215,7 +215,7 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-	// ⚠️ Guard against abuse (VERY important)
+	// Guard against abuse (VERY important)
 	if len(data.Points) > 100 {
 		return
 	}
@@ -228,7 +228,7 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 
 // handleDrawEnd processes the end of a drawing action and broadcasts it to other clients.
 func (r *Room) handleDrawEnd(sender *client.Client) {
-	if !r.isDrawer(sender.ID) {
+	if r.engine.CurrentDrawerID() != sender.ID {
 		return
 	}
 
@@ -239,7 +239,7 @@ func (r *Room) handleDrawEnd(sender *client.Client) {
 
 // handleClearCanvas processes a canvas clear action from the drawer and broadcasts it to other clients.
 func (r *Room) handleClearCanvas(sender *client.Client) {
-	if !r.isDrawer(sender.ID) {
+	if r.engine.CurrentDrawerID() != sender.ID {
 		return
 	}
 
@@ -250,6 +250,7 @@ func (r *Room) handleClearCanvas(sender *client.Client) {
 
 // broadcastDraw sends drawing-related messages to all clients in the room.
 func (r *Room) broadcastDraw(eventType string, data interface{}) {
+
 	msg := transport.Message{
 		Type: eventType,
 		Data: data,
