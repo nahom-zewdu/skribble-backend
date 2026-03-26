@@ -210,6 +210,11 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
+	// Only accept draw moves during the drawing phase to prevent abuse
+	if r.engine.CurrentPhase() != game.PhaseDrawing {
+		return
+	}
+
 	var data transport.DrawMove
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return
