@@ -192,6 +192,10 @@ func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
+	if r.engine.CurrentPhase() != game.PhaseDrawing {
+		return
+	}
+
 	var data transport.DrawStart
 	if err := json.Unmarshal(raw, &data); err != nil {
 		return
@@ -237,6 +241,10 @@ func (r *Room) handleDrawEnd(sender *client.Client) {
 		return
 	}
 
+	if r.engine.CurrentPhase() != game.PhaseDrawing {
+		return
+	}
+
 	r.broadcastDraw("draw_end", map[string]interface{}{
 		"senderID": sender.ID,
 	})
@@ -245,6 +253,10 @@ func (r *Room) handleDrawEnd(sender *client.Client) {
 // handleClearCanvas processes a canvas clear action from the drawer and broadcasts it to other clients.
 func (r *Room) handleClearCanvas(sender *client.Client) {
 	if r.engine.CurrentDrawerID() != sender.ID {
+		return
+	}
+
+	if r.engine.CurrentPhase() != game.PhaseDrawing {
 		return
 	}
 
