@@ -81,3 +81,11 @@ func (e *Engine) CurrentDrawerID() string {
 	}
 	return e.game.CurrentTurn.DrawerID
 }
+
+// CurrentPhase returns the current turn phase, or empty string if no active turn.
+func (e *Engine) CurrentPhase() game.TurnPhase {
+	if e.game.CurrentTurn == nil {
+		return ""
+	}
+	return e.game.CurrentTurn.Phase
+}
