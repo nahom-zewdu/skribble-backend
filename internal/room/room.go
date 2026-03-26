@@ -186,6 +186,24 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 	r.broadcastChat(sender.Name, chat.Text)
 }
 
+// handleDrawStart processes the start of a drawing action from the drawer and broadcasts it to other clients.
+func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
+	if !r.isDrawer(sender.ID) {
+		return
+	}
+
+	var data transport.DrawStart
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return
+	}
+
+	r.broadcastDraw("draw_start", map[string]interface{}{
+		"x":        data.X,
+		"y":        data.Y,
+		"senderID": sender.ID,
+	})
+}
+
 // handleEvents translates domain GameEvents into transport-level messages.
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
