@@ -307,6 +307,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			r.broadcastSystem("Game started")
 
 		case game.EventTurnStarted:
+			r.broadcastDraw("", "clear_canvas", map[string]interface{}{})
 			payload := e.Payload.(game.TurnStartedPayload)
 
 			for _, c := range r.clients {
@@ -327,6 +328,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			}
 
 		case game.EventWordSelected:
+			r.broadcastDraw("", "clear_canvas", map[string]interface{}{})
 			payload := e.Payload.(game.WordSelectedPayload)
 
 			for _, c := range r.clients {
@@ -369,6 +371,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			}
 
 		case game.EventGameEnded:
+			r.broadcastDraw("", "clear_canvas", map[string]interface{}{})
 			payload := e.Payload.(game.GameEndedPayload)
 
 			msg := transport.Message{
