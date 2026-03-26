@@ -229,6 +229,12 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
+	for _, p := range data.Points {
+		if p.X < 0 || p.Y < 0 || p.X > 5000 || p.Y > 5000 {
+			return
+		}
+	}
+
 	r.broadcastDraw("draw_move", map[string]interface{}{
 		"points":   data.Points,
 		"senderID": sender.ID,
