@@ -299,6 +299,16 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 
 // HandleTimeouts processes word selection and drawing timeouts.
 func (g *Game) HandleTimeouts() ([]GameEvent, error) {
+
+	// Handle automatic game restart
+	if g.State == Ended && g.RestartDeadline != nil {
+		if time.Now().After(*g.RestartDeadline) {
+			g.RestartDeadline = nil
+			g.Reset()
+			return g.Start()
+		}
+	}
+
 	if g.CurrentTurn == nil || g.CurrentTurn.Completed {
 		return nil, nil
 	}
@@ -336,15 +346,6 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		endEvents, _ := g.EndTurn()
 
 		return append([]GameEvent{timeoutEvent}, endEvents...), nil
-	}
-
-	// Handle automatic game restart
-	if g.State == Ended && g.RestartDeadline != nil {
-		if time.Now().After(*g.RestartDeadline) {
-			g.RestartDeadline = nil
-			g.Reset()
-			return g.Start()
-		}
 	}
 
 	// Handle turn transition after turn end
