@@ -91,7 +91,10 @@ func (r *Room) run() {
 	}
 }
 
-// onJoin handles new player registration and delegates domain updates to the Engine.
+// --------------------
+// JOIN / LEAVE
+// --------------------
+
 func (r *Room) onJoin(c *client.Client) {
 	events, err := r.engine.AddPlayer(c.ID, c.Name)
 	if err != nil {
@@ -99,9 +102,9 @@ func (r *Room) onJoin(c *client.Client) {
 		return
 	}
 
-	// Send full snapshot to the newly joined player
 	snapshot := r.engine.Snapshot()
-	snapshot.SelfID = c.ID // Include SelfID in the snapshot for client-side logic
+	snapshot.SelfID = c.ID
+
 	c.Send <- r.mustMarshal(transport.Message{
 		Type: "game_snapshot",
 		Data: snapshot,
@@ -124,6 +127,7 @@ func (r *Room) onLeave(c *client.Client) {
 // onMessage routes incoming client messages to the appropriate Engine command.
 func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	var incoming transport.ClientMessage
+	log.Printf("incoming: %s from %s", incoming.Type, sender.ID)
 
 	if err := json.Unmarshal(raw, &incoming); err != nil {
 		return
@@ -164,7 +168,10 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	}
 }
 
-// handleChat sends guesses to the Engine and falls back to normal chat broadcast if no domain event is emitted.
+// --------------------
+// CHAT / GUESS
+// --------------------
+
 func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 	var chat transport.ChatMessage
 	if err := json.Unmarshal(raw, &chat); err != nil {
@@ -182,17 +189,29 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-	// Otherwise it's normal chat
 	r.broadcastChat(sender.Name, chat.Text)
 }
 
-// handleDrawStart processes the start of a drawing action from the drawer and broadcasts it to other clients.
-func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
-	if r.engine.CurrentDrawerID() != sender.ID {
-		return
-	}
+// --------------------
+// DRAWING HELPERS
+// --------------------
 
-	if r.engine.CurrentPhase() != game.PhaseDrawing {
+func (r *Room) isDrawer(sender *client.Client) bool {
+	snap := r.engine.Snapshot()
+	return snap.DrawerID == sender.ID
+}
+
+func (r *Room) isDrawingPhase() bool {
+	snap := r.engine.Snapshot()
+	return snap.Phase == game.PhaseDrawing
+}
+
+// --------------------
+// DRAW EVENTS
+// --------------------
+
+func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
 
@@ -201,21 +220,11 @@ func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-	r.broadcastDraw(sender.ID, "draw_start", map[string]interface{}{
-		"x":        data.X,
-		"y":        data.Y,
-		"senderID": sender.ID,
-	})
+	r.broadcastDraw(sender.ID, "draw_start", data)
 }
 
-// handleDrawMove processes drawing movements from the drawer and broadcasts them to other clients.
 func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
-	if r.engine.CurrentDrawerID() != sender.ID {
-		return
-	}
-
-	// Only accept draw moves during the drawing phase to prevent abuse
-	if r.engine.CurrentPhase() != game.PhaseDrawing {
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
 
@@ -224,56 +233,43 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
-	// Guard against abuse (VERY important)
-	if len(data.Points) > 100 {
+	// Abuse protection
+	if len(data.Points) == 0 || len(data.Points) > 50 {
 		return
 	}
 
 	for _, p := range data.Points {
-		if p.X < 0 || p.Y < 0 || p.X > 5000 || p.Y > 5000 {
+		if p.X < 0 || p.Y < 0 || p.X > 2000 || p.Y > 2000 {
 			return
 		}
 	}
 
-	r.broadcastDraw(sender.ID, "draw_move", map[string]interface{}{
-		"points":   data.Points,
-		"senderID": sender.ID,
-	})
+	r.broadcastDraw(sender.ID, "draw_move", data)
 }
 
 // handleDrawEnd processes the end of a drawing action and broadcasts it to other clients.
 func (r *Room) handleDrawEnd(sender *client.Client) {
-	if r.engine.CurrentDrawerID() != sender.ID {
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
 
-	if r.engine.CurrentPhase() != game.PhaseDrawing {
-		return
-	}
-
-	r.broadcastDraw(sender.ID, "draw_end", map[string]interface{}{
-		"senderID": sender.ID,
-	})
+	r.broadcastDraw(sender.ID, "draw_end", nil)
 }
 
 // handleClearCanvas processes a canvas clear action from the drawer and broadcasts it to other clients.
 func (r *Room) handleClearCanvas(sender *client.Client) {
-	if r.engine.CurrentDrawerID() != sender.ID {
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
 
-	if r.engine.CurrentPhase() != game.PhaseDrawing {
-		return
-	}
-
-	r.broadcastDraw(sender.ID, "clear_canvas", map[string]interface{}{
-		"senderID": sender.ID,
-	})
+	r.broadcastAll("clear_canvas", nil)
 }
 
-// broadcastDraw sends drawing-related messages to all clients except the sender in the room.
-func (r *Room) broadcastDraw(senderID, eventType string, data interface{}) {
+// --------------------
+// BROADCAST HELPERS
+// --------------------
 
+func (r *Room) broadcastDraw(senderID, eventType string, data interface{}) {
 	msg := transport.Message{
 		Type: eventType,
 		Data: data,
@@ -289,7 +285,23 @@ func (r *Room) broadcastDraw(senderID, eventType string, data interface{}) {
 	}
 }
 
-// handleEvents translates domain GameEvents into transport-level messages.
+func (r *Room) broadcastAll(eventType string, data interface{}) {
+	msg := transport.Message{
+		Type: eventType,
+		Data: data,
+	}
+
+	payload := r.mustMarshal(msg)
+
+	for _, c := range r.clients {
+		c.Send <- payload
+	}
+}
+
+// --------------------
+// ENGINE EVENTS
+// --------------------
+
 func (r *Room) handleEvents(events []game.GameEvent) {
 	for _, e := range events {
 
@@ -307,28 +319,18 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			r.broadcastSystem("Game started")
 
 		case game.EventTurnStarted:
-			r.broadcastDraw("", "clear_canvas", map[string]interface{}{})
-			payload := e.Payload.(game.TurnStartedPayload)
+			r.broadcastAll("clear_canvas", nil)
 
-			for _, c := range r.clients {
-				c.Send <- r.mustMarshal(transport.Message{
-					Type: "turn_started",
-					Data: payload,
-				})
-			}
+			payload := e.Payload.(game.TurnStartedPayload)
+			r.broadcastAll("turn_started", payload)
 
 		case game.EventWordSelectionStarted:
 			payload := e.Payload.(game.WordSelectionStartedPayload)
-
-			for _, c := range r.clients {
-				c.Send <- r.mustMarshal(transport.Message{
-					Type: "word_selection_started",
-					Data: payload,
-				})
-			}
+			r.broadcastAll("word_selection_started", payload)
 
 		case game.EventWordSelected:
-			r.broadcastDraw("", "clear_canvas", map[string]interface{}{})
+			r.broadcastAll("clear_canvas", nil)
+
 			payload := e.Payload.(game.WordSelectedPayload)
 
 			for _, c := range r.clients {
@@ -345,7 +347,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 						Type: "drawing_started",
 						Data: map[string]interface{}{
 							"deadline":   payload.PlayDeadline,
-							"maskedWord": payload.Word, // Note: this will be masked (e.g. "_ _ _ _")
+							"maskedWord": payload.Word,
 						},
 					})
 				}
@@ -353,87 +355,44 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 
 		case game.EventCorrectGuess:
 			payload := e.Payload.(game.CorrectGuessPayload)
-
 			r.broadcastCorrectGuess(payload)
 
 		case game.EventTurnEnded:
 			payload := e.Payload.(game.TurnEndedPayload)
-
-			msg := transport.Message{
-				Type: "turn_ended",
-				Data: payload,
-			}
-
-			data := r.mustMarshal(msg)
-
-			for _, c := range r.clients {
-				c.Send <- data
-			}
+			r.broadcastAll("turn_ended", payload)
 
 		case game.EventGameEnded:
-			r.broadcastDraw("", "clear_canvas", map[string]interface{}{})
+			r.broadcastAll("clear_canvas", nil)
+
 			payload := e.Payload.(game.GameEndedPayload)
-
-			msg := transport.Message{
-				Type: "game_ended",
-				Data: payload,
-			}
-
-			data := r.mustMarshal(msg)
-
-			for _, c := range r.clients {
-				c.Send <- data
-			}
+			r.broadcastAll("game_ended", payload)
 		}
 	}
 }
 
-// broadcastChat sends a chat message to all clients in the room.
+// --------------------
+// GENERIC BROADCASTS
+// --------------------
+
 func (r *Room) broadcastChat(sender, text string) {
-	msg := transport.Message{
-		Type: "chat",
-		Data: map[string]interface{}{
-			"sender": sender,
-			"text":   text,
-		},
-	}
-
-	payload := r.mustMarshal(msg)
-
-	for _, c := range r.clients {
-		c.Send <- payload
-	}
+	r.broadcastAll("chat", map[string]interface{}{
+		"sender": sender,
+		"text":   text,
+	})
 }
 
-// broadcastCorrectGuess notifies clients that a player guessed correctly.
-func (r *Room) broadcastCorrectGuess(guessPayload game.CorrectGuessPayload) {
-	msg := transport.Message{
-		Type: "correct_guess",
-		Data: guessPayload,
-	}
-
-	payload := r.mustMarshal(msg)
-
-	for _, c := range r.clients {
-		c.Send <- payload
-	}
+func (r *Room) broadcastCorrectGuess(payload game.CorrectGuessPayload) {
+	r.broadcastAll("correct_guess", payload)
 }
 
-// broadcastSystem sends a system message to all clients.
 func (r *Room) broadcastSystem(text string) {
-	msg := transport.Message{
-		Type: "system",
-		Data: transport.SystemMessage{Text: text},
-	}
-
-	payload := r.mustMarshal(msg)
-
-	for _, c := range r.clients {
-		c.Send <- payload
-	}
+	r.broadcastAll("system", transport.SystemMessage{Text: text})
 }
 
-// mustMarshal marshals a value to JSON and logs errors if any.
+// --------------------
+// UTIL
+// --------------------
+
 func (r *Room) mustMarshal(v interface{}) []byte {
 	b, err := json.Marshal(v)
 	if err != nil {
