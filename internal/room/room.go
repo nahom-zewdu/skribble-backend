@@ -61,6 +61,10 @@ func (r *Room) HandleClientMessage(c *client.Client, msg []byte) {
 	r.incoming <- clientMessage{client: c, message: msg}
 }
 
+func (r *Room) ClientCount() int {
+	return len(r.clients)
+}
+
 // run is the main loop for the room.
 // It delegates all game-related decisions to the Engine and only reacts to emitted events.
 func (r *Room) run() {
