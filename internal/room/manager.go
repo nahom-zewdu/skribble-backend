@@ -26,7 +26,7 @@ func (m *Manager) GetOrCreateRoom(id string) *Room {
 		return room
 	}
 
-	room := NewRoom(id)
+	room := NewRoom(id, m)
 	m.rooms[id] = room
 	return room
 }
