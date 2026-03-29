@@ -313,7 +313,19 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 
 	// Drawing timeout
 	if g.CurrentTurn.Phase == PhaseDrawing && now.After(g.CurrentTurn.PlayDeadline) {
-		return g.EndTurn()
+		timeoutEvent := GameEvent{
+			Type:      EventDrawingTimeout,
+			Timestamp: now,
+			Payload: map[string]interface{}{
+				"drawerID": g.CurrentTurn.DrawerID,
+				"turn":     g.CurrentTurn.Number,
+				"word":     g.CurrentTurn.Word,
+			},
+		}
+
+		endEvents, _ := g.EndTurn()
+
+		return append([]GameEvent{timeoutEvent}, endEvents...), nil
 	}
 
 	// Handle automatic game restart
