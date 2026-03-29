@@ -298,7 +298,8 @@ func (r *Room) broadcastDraw(senderID, eventType string, data interface{}) {
 }
 
 func (r *Room) broadcastAll(eventType string, data interface{}) {
-	log.Println("broadcasting all:", eventType)
+	log.Println("broadcasting all:", eventType, data)
+
 	msg := transport.Message{
 		Type: eventType,
 		Data: data,
