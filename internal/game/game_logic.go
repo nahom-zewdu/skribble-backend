@@ -5,6 +5,7 @@ package game
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -43,6 +44,7 @@ func (g *Game) Start() ([]GameEvent, error) {
 			Timestamp: time.Now(),
 		},
 	}
+	log.Printf("[game] Game started with players: %v\n", g.PlayerSnapshot())
 
 	turnEvents, err := g.startNextTurn()
 	if err != nil {
@@ -76,6 +78,10 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		}, errors.New("game ended")
 	}
 
+	// log player and game snapshot for debugging
+	log.Printf("[game] Players: %v", g.PlayerSnapshot())
+	log.Printf("[game] Starting next turn. Current player index: %d", g.playerIndex)
+
 	// Select next drawer in round-robin fashion
 	drawer := g.Players[g.playerIndex%len(g.Players)]
 	turnNumber := 1
@@ -97,6 +103,8 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 	}
 
 	g.playerIndex++
+
+	log.Printf("[game] Turn %d started. Drawer: %s. Word choices: %v", turnNumber, drawer.Name, choices)
 
 	return []GameEvent{
 		{
