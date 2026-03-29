@@ -5,6 +5,7 @@ package game
 
 import (
 	"errors"
+	"log"
 	"time"
 )
 
@@ -114,6 +115,7 @@ func (g *Game) AddPlayer(id, name string) ([]GameEvent, error) {
 	var events []GameEvent
 
 	g.Players = append(g.Players, player)
+	log.Printf("[game] Player %s joined the game\n", name)
 
 	events = append(events, GameEvent{
 		Type:      EventPlayerJoined,
