@@ -19,6 +19,7 @@ type Room struct {
 	ID string
 
 	clients map[string]*client.Client
+	manager *Manager
 
 	register   chan *client.Client
 	unregister chan *client.Client
@@ -32,13 +33,14 @@ type clientMessage struct {
 	message []byte
 }
 
-func NewRoom(id string) *Room {
+func NewRoom(id string, m *Manager) *Room {
 	g := game.NewGame()
 	e := engine.New(g)
 
 	r := &Room{
 		ID:         id,
 		clients:    make(map[string]*client.Client),
+		manager:    m,
 		register:   make(chan *client.Client),
 		unregister: make(chan *client.Client),
 		incoming:   make(chan clientMessage),
