@@ -88,6 +88,12 @@ func (r *Room) run() {
 				close(c.Send)
 				r.onLeave(c)
 			}
+			if r.ClientCount() <= 0 {
+				log.Printf("[room] No clients left in room %s, deleting room\n", r.ID)
+				r.manager.DeleteRoom(r.ID)
+
+				return
+			}
 
 		case msg := <-r.incoming:
 			r.onMessage(msg.client, msg.message)
