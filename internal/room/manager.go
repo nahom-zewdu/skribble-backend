@@ -2,7 +2,10 @@
 // This file defines the Manager struct, which is responsible for managing multiple game rooms in the Skribble backend.
 package room
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type Manager struct {
 	rooms map[string]*Room
@@ -28,7 +31,7 @@ func (m *Manager) GetOrCreateRoom(id string) *Room {
 	return room
 }
 
-// DeleteRoom removes a room from the manager. It acquires a write lock to safely modify the rooms map, deletes the specified room, and logs the deletion.	
+// DeleteRoom removes a room from the manager. It acquires a write lock to safely modify the rooms map, deletes the specified room, and logs the deletion.
 func (m *Manager) DeleteRoom(id string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
