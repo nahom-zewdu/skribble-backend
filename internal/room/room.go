@@ -211,6 +211,8 @@ func (r *Room) isDrawingPhase() bool {
 // --------------------
 
 func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
+	log.Println("draw_move accepted")
+
 	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
@@ -224,6 +226,8 @@ func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
 }
 
 func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
+	log.Println("draw_move accepted")
+
 	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
@@ -249,6 +253,8 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 
 // handleDrawEnd processes the end of a drawing action and broadcasts it to other clients.
 func (r *Room) handleDrawEnd(sender *client.Client) {
+	log.Println("draw_move accepted")
+
 	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
@@ -258,6 +264,8 @@ func (r *Room) handleDrawEnd(sender *client.Client) {
 
 // handleClearCanvas processes a canvas clear action from the drawer and broadcasts it to other clients.
 func (r *Room) handleClearCanvas(sender *client.Client) {
+	log.Println("draw_move accepted")
+
 	if !r.isDrawer(sender) || !r.isDrawingPhase() {
 		return
 	}
