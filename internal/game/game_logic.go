@@ -307,8 +307,18 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 
 	// Word selection timeout
 	if g.CurrentTurn.Phase == PhaseSelecting && now.After(g.CurrentTurn.SelectionDeadline) {
-		g.CurrentTurn.Word = "" // no word selected
-		return g.EndTurn()
+		timeoutEvent := GameEvent{
+			Type:      EventSelectionTimeout,
+			Timestamp: now,
+			Payload: map[string]interface{}{
+				"drawerID": g.CurrentTurn.DrawerID,
+				"turn":     g.CurrentTurn.Number,
+			},
+		}
+
+		endEvents, _ := g.EndTurn()
+
+		return append([]GameEvent{timeoutEvent}, endEvents...), nil
 	}
 
 	// Drawing timeout
