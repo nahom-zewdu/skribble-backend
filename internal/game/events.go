@@ -19,6 +19,8 @@ const (
 	EventPlayerJoined         EventType = "player_joined"
 	EventPlayerLeft           EventType = "player_left"
 	EventWordSelectionStarted EventType = "word_selection_started"
+	EventSelectionTimeout     EventType = "selection_timeout"
+	EventDrawingTimeout       EventType = "drawing_timeout"
 )
 
 type GameEvent struct {
