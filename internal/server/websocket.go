@@ -53,6 +53,9 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		},
 		func() {
 			room.Unregister(c)
+			if room.ClientCount() <= 0 {
+				roomManager.DeleteRoom(roomID)
+			}
 		},
 	)
 }
