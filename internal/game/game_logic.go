@@ -309,7 +309,7 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		}
 	}
 
-	if g.CurrentTurn == nil || g.CurrentTurn.Completed {
+	if g.CurrentTurn == nil {
 		return nil, nil
 	}
 
