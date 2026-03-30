@@ -345,6 +345,7 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 
 		endEvents, _ := g.EndTurn()
 
+		log.Printf("[game] Drawing timeout for drawer %s on turn %d. Ending turn.", g.CurrentTurn.DrawerID, g.CurrentTurn.Number)
 		return append([]GameEvent{timeoutEvent}, endEvents...), nil
 	}
 
