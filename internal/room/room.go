@@ -139,11 +139,11 @@ func (r *Room) onLeave(c *client.Client) {
 // onMessage routes incoming client messages to the appropriate Engine command.
 func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	var incoming transport.ClientMessage
-	log.Printf("incoming: %s from %s", incoming.Type, sender.ID)
-
 	if err := json.Unmarshal(raw, &incoming); err != nil {
 		return
 	}
+
+	log.Printf("incoming: %s from %s", incoming.Type, sender.ID)
 
 	switch incoming.Type {
 
