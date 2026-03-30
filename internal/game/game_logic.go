@@ -328,6 +328,7 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 
 		endEvents, _ := g.EndTurn()
 
+		log.Printf("[game] Word selection timeout for drawer %s on turn %d. Auto-selecting word and ending turn.", g.CurrentTurn.DrawerID, g.CurrentTurn.Number)
 		return append([]GameEvent{timeoutEvent}, endEvents...), nil
 	}
 
