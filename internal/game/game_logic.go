@@ -294,6 +294,8 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 	transition := now.Add(3 * time.Second)
 	g.TurnTransitionDeadline = &transition
 
+	log.Printf("[game] Turn %d ended. Word: %s. Transitioning to next turn at %v", g.CurrentTurn.Number, g.CurrentTurn.Word, transition)
+
 	return events, nil
 }
 
