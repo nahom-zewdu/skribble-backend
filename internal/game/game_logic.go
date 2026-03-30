@@ -305,6 +305,8 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		if time.Now().After(*g.RestartDeadline) {
 			g.RestartDeadline = nil
 			g.Reset()
+
+			log.Printf("[game] Restarting game. Players: %v", g.PlayerSnapshot())
 			return g.Start()
 		}
 	}
