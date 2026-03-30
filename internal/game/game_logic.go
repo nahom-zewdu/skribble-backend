@@ -354,6 +354,8 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		time.Now().After(*g.TurnTransitionDeadline) {
 
 		g.TurnTransitionDeadline = nil
+
+		log.Printf("[game] Transitioning to next turn after turn %d.", g.CurrentTurn.Number)
 		return g.startNextTurn()
 	}
 
