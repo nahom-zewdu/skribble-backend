@@ -388,6 +388,10 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 
 			payload := e.Payload.(game.GameEndedPayload)
 			r.broadcastAll("game_ended", payload)
+
+		case game.EventSelectionTimeout:
+			payload := e.Payload.(map[string]interface{})
+			r.broadcastAll("selection_timeout", payload)
 		}
 	}
 }
