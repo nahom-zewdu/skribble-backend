@@ -74,20 +74,20 @@ type PlayerSnapshot struct {
 }
 
 type GameSnapshot struct {
-	State      State
-	TurnNumber int
-	MaxTurns   int
-	DrawerID   string
-	Phase      TurnPhase
-	Players    []PlayerSnapshot
-	SelfID     string
+	State      State            `json:"state"`
+	TurnNumber int              `json:"turnNumber"`
+	MaxTurns   int              `json:"maxTurns"`
+	DrawerID   string           `json:"drawerID"`
+	Phase      TurnPhase        `json:"phase"`
+	Players    []PlayerSnapshot `json:"players"`
+	SelfID     string           `json:"selfID"`
 
-	MaskedWord string
+	MaskedWord string `json:"maskedWord"`
 
-	SelectionDeadline  *time.Time
-	PlayDeadline       *time.Time
-	TransitionDeadline *time.Time
-	RestartDeadline    *time.Time
+	SelectionDeadline  *time.Time `json:"selectionDeadline,omitempty"`
+	PlayDeadline       *time.Time `json:"playDeadline,omitempty"`
+	TransitionDeadline *time.Time `json:"transitionDeadline,omitempty"`
+	RestartDeadline    *time.Time `json:"restartDeadline,omitempty"`
 }
 
 func NewGame() *Game {
