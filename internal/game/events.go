@@ -68,7 +68,7 @@ type PlayerLeftPayload struct {
 }
 
 type WordSelectionStartedPayload struct {
-	DrawerID string
-	Choices  []string
-	Deadline time.Time
+	DrawerID string    `json:"drawerID"`
+	Choices  []string  `json:"choices"`
+	Deadline time.Time `json:"deadline"`
 }
