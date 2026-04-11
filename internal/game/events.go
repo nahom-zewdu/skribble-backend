@@ -30,8 +30,8 @@ type GameEvent struct {
 }
 
 type TurnStartedPayload struct {
-	TurnNumber int
-	DrawerID   string
+	TurnNumber int    `json:"turnNumber"`
+	DrawerID   string `json:"drawerID"`
 }
 
 type WordSelectedPayload struct {
