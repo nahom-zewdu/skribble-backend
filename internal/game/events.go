@@ -24,10 +24,14 @@ const (
 )
 
 type GameEvent struct {
-	Type      EventType
-	Timestamp time.Time
-	Payload   interface{}
+	Type      EventType   `json:"type"`
+	Timestamp time.Time   `json:"timestamp"`
+	Payload   interface{} `json:"data"`
 }
+
+// --------------------
+// Payloads
+// --------------------
 
 type TurnStartedPayload struct {
 	TurnNumber int    `json:"turnNumber"`
@@ -35,36 +39,36 @@ type TurnStartedPayload struct {
 }
 
 type WordSelectedPayload struct {
-	DrawerID     string
-	Word         string
+	DrawerID     string    `json:"drawerID"`
+	Word         string    `json:"word"`
 	PlayDeadline time.Time `json:"playDeadline"`
 }
 
 type CorrectGuessPayload struct {
-	PlayerID string
-	Score    int
+	PlayerID string `json:"playerID"`
+	Score    int    `json:"score"`
 }
 
 type TurnEndedPayload struct {
-	TurnNumber        int
-	Word              string
-	Players           []PlayerSnapshot
-	NextTurnStartTime time.Time
+	TurnNumber        int              `json:"turnNumber"`
+	Word              string           `json:"word"`
+	Players           []PlayerSnapshot `json:"players"`
+	NextTurnStartTime time.Time        `json:"nextTurnStartTime"`
 }
 
 type GameEndedPayload struct {
-	Players     []PlayerSnapshot
-	RestartTime time.Time `json:"restartTime"`
+	Players     []PlayerSnapshot `json:"players"`
+	RestartTime time.Time        `json:"restartTime"`
 }
 
 type PlayerJoinedPayload struct {
-	PlayerID string
-	Name     string
+	PlayerID string `json:"playerID"`
+	Name     string `json:"name"`
 }
 
 type PlayerLeftPayload struct {
-	PlayerID string
-	Name     string
+	PlayerID string `json:"playerID"`
+	Name     string `json:"name"`
 }
 
 type WordSelectionStartedPayload struct {
