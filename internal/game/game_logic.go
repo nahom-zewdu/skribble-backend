@@ -228,13 +228,23 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 		}
 	}
 
+	// Get player name for event payload
+	var playerName string
+	for _, p := range g.Players {
+		if p.ID == playerID {
+			playerName = p.Name
+			break
+		}
+	}
+
 	event := []GameEvent{
 		{
 			Type:      EventCorrectGuess,
 			Timestamp: time.Now(),
 			Payload: CorrectGuessPayload{
-				PlayerID: playerID,
-				Score:    score,
+				PlayerID:   playerID,
+				PlayerName: playerName,
+				Score:      score,
 			},
 		},
 	}
