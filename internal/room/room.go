@@ -7,6 +7,7 @@ package room
 import (
 	"encoding/json"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
@@ -416,7 +417,13 @@ func (r *Room) broadcastChat(sender, text string) {
 }
 
 func (r *Room) broadcastCorrectGuess(payload game.CorrectGuessPayload) {
+	// dedicated event
 	r.broadcastAll("correct_guess", payload)
+
+	// system chat message
+	r.broadcastSystem(
+		payload.PlayerName + " guessed correctly! +" + strconv.Itoa(payload.Score),
+	)
 }
 
 func (r *Room) broadcastSystem(text string) {
