@@ -89,3 +89,8 @@ func (e *Engine) CurrentPhase() game.TurnPhase {
 	}
 	return e.game.CurrentTurn.Phase
 }
+
+// CanChat checks if a player is allowed to send chat messages based on game state and turn phase.
+func (e *Engine) CanChat(playerID string) bool {
+	return e.game.CanChat(playerID)
+}
