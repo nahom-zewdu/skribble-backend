@@ -45,8 +45,9 @@ type WordSelectedPayload struct {
 }
 
 type CorrectGuessPayload struct {
-	PlayerID string `json:"playerID"`
-	Score    int    `json:"score"`
+	PlayerID   string `json:"playerID"`
+	PlayerName string `json:"playerName"`
+	Score      int    `json:"score"`
 }
 
 type TurnEndedPayload struct {
