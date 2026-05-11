@@ -190,6 +190,11 @@ func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
 		return
 	}
 
+	// drawer or already-guessed players cannot chat
+	if !r.engine.CanChat(sender.ID) {
+		return
+	}
+
 	events, err := r.engine.Guess(sender.ID, chat.Text)
 	if err != nil {
 		log.Println("Guess error:", err)
