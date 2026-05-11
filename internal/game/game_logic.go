@@ -445,3 +445,22 @@ func (g *Game) Snapshot() GameSnapshot {
 
 	return snap
 }
+
+// CanChat checks if a player is allowed to send chat messages based on current turn and phase.
+func (g *Game) CanChat(playerID string) bool {
+	if g.CurrentTurn == nil {
+		return true
+	}
+
+	// drawer cannot chat
+	if g.CurrentTurn.DrawerID == playerID {
+		return false
+	}
+
+	// already guessed players cannot chat
+	if g.CurrentTurn.Guessed[playerID] {
+		return false
+	}
+
+	return true
+}
