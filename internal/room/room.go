@@ -45,12 +45,13 @@ type clientMessage struct {
 	message []byte
 }
 
-func NewRoom(id string, m *Manager) *Room {
+func NewRoom(id string, roomType RoomType, m *Manager) *Room {
 	g := game.NewGame()
 	e := engine.New(g)
 
 	r := &Room{
 		ID:         id,
+		Type:       roomType,
 		clients:    make(map[string]*client.Client),
 		MaxPlayers: 8,
 		manager:    m,
