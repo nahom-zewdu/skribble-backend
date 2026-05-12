@@ -82,6 +82,8 @@ type GameSnapshot struct {
 	Players    []PlayerSnapshot `json:"players"`
 	SelfID     string           `json:"selfID"`
 
+	RoomID string `json:"roomID"`
+
 	MaskedWord string `json:"maskedWord"`
 
 	SelectionDeadline  *time.Time `json:"selectionDeadline,omitempty"`
