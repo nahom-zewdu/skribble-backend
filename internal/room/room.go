@@ -455,3 +455,13 @@ func (r *Room) mustMarshal(v interface{}) []byte {
 	}
 	return b
 }
+
+// IsFull checks if the room has reached its maximum player capacity by comparing the current client count with the MaxPlayers limit.
+func (r *Room) IsFull() bool {
+	return r.ClientCount() >= r.MaxPlayers
+}
+
+// IsJoinable determines if new players can join the room by checking if the room is not full.
+func (r *Room) IsJoinable() bool {
+	return !r.IsFull()
+}
