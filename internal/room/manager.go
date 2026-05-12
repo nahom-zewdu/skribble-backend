@@ -18,16 +18,45 @@ func NewManager() *Manager {
 	}
 }
 
-func (m *Manager) GetOrCreateRoom(id string) *Room {
+// PUBLIC MATCHMAKING
+func (m *Manager) FindOrCreatePublicRoom() *Room {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	if room, ok := m.rooms[id]; ok {
-		return room
+	for _, room := range m.rooms {
+		if room.Type != PublicRoom {
+			continue
+		}
+
+		if room.IsJoinable() {
+			return room
+		}
 	}
 
-	room := NewRoom(id, m)
-	m.rooms[id] = room
+	roomID := generateRoomCode()
+
+	room := NewRoom(roomID, PublicRoom, m)
+
+	m.rooms[roomID] = room
+
+	log.Printf("[room manager] Created public room %s\n", roomID)
+
+	return room
+}
+
+// PRIVATE ROOMS
+func (m *Manager) CreatePrivateRoom() *Room {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	roomID := generateRoomCode()
+
+	room := NewRoom(roomID, PrivateRoom, m)
+
+	m.rooms[roomID] = room
+
+	log.Printf("[room manager] Created private room %s\n", roomID)
+
 	return room
 }
 
