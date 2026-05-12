@@ -130,6 +130,7 @@ func (r *Room) onJoin(c *client.Client) {
 
 	snapshot := r.engine.Snapshot()
 	snapshot.SelfID = c.ID
+	snapshot.RoomID = r.ID
 
 	c.Send <- r.mustMarshal(transport.Message{
 		Type: "game_snapshot",
