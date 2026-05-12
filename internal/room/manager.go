@@ -1,11 +1,17 @@
 // internal/room/manager.go
-// This file defines the Manager struct, which is responsible for managing multiple game rooms in the Skribble backend.
+// This file defines the Manager struct responsible for managing game rooms in the Skribble backend.
+// The Manager handles creating, retrieving, and deleting rooms, as well as generating unique room codes for public and private rooms.
+
 package room
 
 import (
 	"log"
+	"math/rand"
 	"sync"
+	"time"
 )
+
+const roomCodeCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 type Manager struct {
 	rooms map[string]*Room
@@ -13,6 +19,8 @@ type Manager struct {
 }
 
 func NewManager() *Manager {
+	rand.Seed(time.Now().UnixNano())
+
 	return &Manager{
 		rooms: make(map[string]*Room),
 	}
