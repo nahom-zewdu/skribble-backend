@@ -16,8 +16,19 @@ import (
 	"github.com/nahom-zewdu/skribble-backend/internal/transport"
 )
 
+type RoomType string
+
+const (
+	PublicRoom  RoomType = "public"
+	PrivateRoom RoomType = "private"
+)
+
 type Room struct {
 	ID string
+
+	Type RoomType
+
+	MaxPlayers int
 
 	clients map[string]*client.Client
 	manager *Manager
