@@ -39,3 +39,16 @@ func (m *Manager) DeleteRoom(id string) {
 	delete(m.rooms, id)
 	log.Printf("[room manager] Deleted room %s\n", id)
 }
+
+// ROOM CODE
+
+func generateRoomCode() string {
+	length := 6
+	b := make([]byte, length)
+
+	for i := range b {
+		b[i] = roomCodeCharset[rand.Intn(len(roomCodeCharset))]
+	}
+
+	return string(b)
+}
