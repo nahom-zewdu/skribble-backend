@@ -52,6 +52,7 @@ func NewRoom(id string, m *Manager) *Room {
 	r := &Room{
 		ID:         id,
 		clients:    make(map[string]*client.Client),
+		MaxPlayers: 8,
 		manager:    m,
 		register:   make(chan *client.Client),
 		unregister: make(chan *client.Client),
