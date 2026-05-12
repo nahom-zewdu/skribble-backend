@@ -31,7 +31,25 @@ func (m *Manager) GetOrCreateRoom(id string) *Room {
 	return room
 }
 
-// DeleteRoom removes a room from the manager. It acquires a write lock to safely modify the rooms map, deletes the specified room, and logs the deletion.
+func (m *Manager) GetPrivateRoom(id string) (*Room, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	room, ok := m.rooms[id]
+
+	if !ok {
+		return nil, false
+	}
+
+	if room.Type != PrivateRoom {
+		return nil, false
+	}
+
+	return room, true
+}
+
+// DELETE
+
 func (m *Manager) DeleteRoom(id string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
