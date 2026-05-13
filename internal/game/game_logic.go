@@ -7,6 +7,8 @@ import (
 	"errors"
 	"log"
 	"math/rand"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -556,4 +558,28 @@ func (g *Game) RevealRandomLetter() bool {
 	g.CurrentTurn.RevealedIndexes[index] = true
 
 	return true
+}
+
+// WordLengthHint returns a string hint showing the length of each word in the current turn's word, e.g. "(5 3)" for "apple pie".
+func (g *Game) WordLengthHint() string {
+	if g.CurrentTurn == nil || g.CurrentTurn.Word == "" {
+		return ""
+	}
+
+	words := strings.Fields(g.CurrentTurn.Word)
+
+	result := "("
+
+	for i, word := range words {
+
+		result += strconv.Itoa(len([]rune(word)))
+
+		if i < len(words)-1 {
+			result += " "
+		}
+	}
+
+	result += ")"
+
+	return result
 }
