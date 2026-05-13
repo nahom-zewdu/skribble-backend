@@ -89,7 +89,8 @@ type GameSnapshot struct {
 
 	RoomID string `json:"roomID"`
 
-	MaskedWord string `json:"maskedWord"`
+	MaskedWord     string `json:"maskedWord"`
+	WordLengthHint string `json:"wordLengthHint"`
 
 	SelectionDeadline  *time.Time `json:"selectionDeadline,omitempty"`
 	PlayDeadline       *time.Time `json:"playDeadline,omitempty"`
