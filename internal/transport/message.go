@@ -36,29 +36,3 @@ System message payload
 type SystemMessage struct {
 	Text string `json:"text"`
 }
-
-/*
-Drawing message payloads
-*/
-type Point struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-/*
-Drawing actions
-*/
-type DrawStart struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-type DrawMove struct {
-	Points []Point `json:"points"`
-}
-
-/*
-Drawing end and canvas clear actions
-*/
-type DrawEnd struct{}
-type ClearCanvas struct{}
