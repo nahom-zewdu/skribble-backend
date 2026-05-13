@@ -63,7 +63,7 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 
 	// If max turns reached, end game
 	if g.CurrentTurn != nil && g.CurrentTurn.Number >= g.MaxTurns {
-		restart := time.Now().Add(5 * time.Second)
+		restart := time.Now().Add(10 * time.Second)
 		g.RestartDeadline = &restart
 		g.State = Ended
 		return []GameEvent{
@@ -275,7 +275,7 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 	g.CurrentTurn.Phase = PhaseEnded
 
 	now := time.Now()
-	transitionDeadline := now.Add(3 * time.Second)
+	transitionDeadline := now.Add(5 * time.Second)
 	events := []GameEvent{
 		{
 			Type:      EventTurnEnded,
@@ -305,8 +305,8 @@ func (g *Game) EndTurn() ([]GameEvent, error) {
 		return events, nil
 	}
 
-	// Schedule next turn transition (3 seconds)
-	transition := now.Add(3 * time.Second)
+	// Schedule next turn transition (5 seconds)
+	transition := now.Add(5 * time.Second)
 	g.TurnTransitionDeadline = &transition
 
 	log.Printf("[game] Turn %d ended. Word: %s. Transitioning to next turn at %v", g.CurrentTurn.Number, g.CurrentTurn.Word, transition)
