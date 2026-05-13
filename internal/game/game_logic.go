@@ -6,6 +6,7 @@ package game
 import (
 	"errors"
 	"log"
+	"math/rand"
 	"time"
 )
 
@@ -477,6 +478,37 @@ func (g *Game) CanChat(playerID string) bool {
 	if g.CurrentTurn.Guessed[playerID] {
 		return false
 	}
+
+	return true
+}
+
+// RevealRandomLetter reveals a random unrevealed letter in the current word as a hint. Returns false if no letters left to reveal.
+func (g *Game) RevealRandomLetter() bool {
+	if g.CurrentTurn == nil {
+		return false
+	}
+
+	word := []rune(g.CurrentTurn.Word)
+
+	var available []int
+
+	for i, ch := range word {
+		if ch == ' ' {
+			continue
+		}
+
+		if !g.CurrentTurn.RevealedIndexes[i] {
+			available = append(available, i)
+		}
+	}
+
+	if len(available) == 0 {
+		return false
+	}
+
+	index := available[rand.Intn(len(available))]
+
+	g.CurrentTurn.RevealedIndexes[index] = true
 
 	return true
 }
