@@ -419,6 +419,10 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 		case game.EventDrawingTimeout:
 			payload := e.Payload.(map[string]interface{})
 			r.broadcastAll("drawing_timeout", payload)
+
+		case game.EventHintRevealed:
+			payload := e.Payload.(game.HintRevealedPayload)
+			r.broadcastAll("hint_revealed", payload)
 		}
 	}
 }
