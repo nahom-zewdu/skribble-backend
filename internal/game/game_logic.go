@@ -385,15 +385,30 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 	// Handle hints during drawing phase
 	if g.CurrentTurn.Phase == PhaseDrawing {
 		elapsed := time.Since(g.CurrentTurn.StartTime)
+		revealed := false
 
 		if elapsed >= 20*time.Second && !g.CurrentTurn.FirstHintGiven {
 			g.CurrentTurn.FirstHintGiven = true
 			g.RevealRandomLetter()
+			revealed = true
 		}
 
 		if elapsed >= 40*time.Second && !g.CurrentTurn.SecondHintGiven {
 			g.CurrentTurn.SecondHintGiven = true
 			g.RevealRandomLetter()
+			revealed = true
+		}
+
+		if revealed {
+			return []GameEvent{
+				{
+					Type:      EventHintRevealed,
+					Timestamp: time.Now(),
+					Payload: HintRevealedPayload{
+						MaskedWord: g.MaskedWord(),
+					},
+				},
+			}, nil
 		}
 	}
 
