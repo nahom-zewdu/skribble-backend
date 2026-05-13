@@ -382,6 +382,21 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 		return g.startNextTurn()
 	}
 
+	// Handle hints during drawing phase
+	if g.CurrentTurn.Phase == PhaseDrawing {
+		elapsed := time.Since(g.CurrentTurn.StartTime)
+
+		if elapsed >= 20*time.Second && !g.CurrentTurn.FirstHintGiven {
+			g.CurrentTurn.FirstHintGiven = true
+			g.RevealRandomLetter()
+		}
+
+		if elapsed >= 40*time.Second && !g.CurrentTurn.SecondHintGiven {
+			g.CurrentTurn.SecondHintGiven = true
+			g.RevealRandomLetter()
+		}
+	}
+
 	return nil, nil
 }
 
