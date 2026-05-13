@@ -84,3 +84,7 @@ type WordSelectionStartedPayload struct {
 	Choices  []string  `json:"choices"`
 	Deadline time.Time `json:"deadline"`
 }
+
+type HintRevealedPayload struct {
+	MaskedWord string `json:"maskedWord"`
+}
