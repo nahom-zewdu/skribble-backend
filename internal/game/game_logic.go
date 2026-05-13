@@ -100,6 +100,7 @@ func (g *Game) startNextTurn() ([]GameEvent, error) {
 		SelectionDeadline: now.Add(10 * time.Second),
 		Guessed:           make(map[string]bool),
 		Completed:         false,
+		RevealedIndexes:   make(map[int]bool),
 	}
 
 	g.playerIndex++
