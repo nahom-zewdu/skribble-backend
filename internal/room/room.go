@@ -269,11 +269,15 @@ func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
 	}
 
 	// Abuse protection
-	if len(data.Points) == 0 || len(data.Points) > 50 {
+	if len(data.Stroke.Points) == 0 || len(data.Stroke.Points) > 50 {
 		return
 	}
 
-	for _, p := range data.Points {
+	if data.Stroke.Thickness < 1 || data.Stroke.Thickness > 64 {
+		return
+	}
+
+	for _, p := range data.Stroke.Points {
 		if p.X < 0 || p.Y < 0 || p.X > 2000 || p.Y > 2000 {
 			return
 		}
