@@ -214,17 +214,19 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 		score = 10
 	}
 
+	drawerPoints := score / 2
+
+	var totalScore int
+
 	for _, p := range g.Players {
+
 		if p.ID == playerID {
 			p.Score += score
-			break
+			totalScore = p.Score
 		}
-	}
-	// Drawer gets half points
-	for _, p := range g.Players {
+
 		if p.ID == g.CurrentTurn.DrawerID {
-			p.Score += score / 2
-			break
+			p.Score += drawerPoints
 		}
 	}
 
@@ -242,9 +244,12 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 			Type:      EventCorrectGuess,
 			Timestamp: time.Now(),
 			Payload: CorrectGuessPayload{
-				PlayerID:   playerID,
-				PlayerName: playerName,
-				Score:      score,
+				PlayerID:     playerID,
+				PlayerName:   playerName,
+				Score:        score,
+				DrawerID:     g.CurrentTurn.DrawerID,
+				DrawerPoints: drawerPoints,
+				TotalScore:   totalScore,
 			},
 		},
 	}
