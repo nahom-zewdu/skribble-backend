@@ -86,5 +86,6 @@ type WordSelectionStartedPayload struct {
 }
 
 type HintRevealedPayload struct {
-	MaskedWord string `json:"maskedWord"`
+	MaskedWord     string `json:"maskedWord"`
+	WordLengthHint string `json:"wordLengthHint"`
 }
