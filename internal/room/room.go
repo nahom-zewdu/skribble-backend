@@ -392,7 +392,7 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 						Type: "drawing_started",
 						Data: map[string]interface{}{
 							"deadline":   payload.PlayDeadline,
-							"maskedWord": payload.Word,
+							"maskedWord": r.engine.Snapshot().MaskedWord,
 						},
 					})
 				}
