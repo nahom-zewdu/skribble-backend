@@ -383,9 +383,10 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 					c.Send <- r.mustMarshal(transport.Message{
 						Type: "drawing_started",
 						Data: map[string]interface{}{
-							"word":       payload.Word,
-							"deadline":   payload.PlayDeadline,
-							"maskedWord": r.engine.Snapshot().MaskedWord,
+							"word":           payload.Word,
+							"deadline":       payload.PlayDeadline,
+							"maskedWord":     r.engine.Snapshot().MaskedWord,
+							"wordLengthHint": r.engine.Snapshot().WordLengthHint,
 						},
 					})
 				} else {
@@ -423,7 +424,10 @@ func (r *Room) handleEvents(events []game.GameEvent) {
 			r.broadcastAll("drawing_timeout", payload)
 
 		case game.EventHintRevealed:
-			payload := e.Payload.(game.HintRevealedPayload)
+			payload := map[string]interface{}{
+				"maskedWord":     r.engine.Snapshot().MaskedWord,
+				"wordLengthHint": r.engine.Snapshot().WordLengthHint,
+			}
 			r.broadcastAll("hint_revealed", payload)
 		}
 	}
