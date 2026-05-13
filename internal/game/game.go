@@ -52,6 +52,11 @@ type Turn struct {
 
 	Guessed   map[string]bool
 	Completed bool
+
+	// Hint system
+	RevealedIndexes map[int]bool
+	FirstHintGiven  bool
+	SecondHintGiven bool
 }
 
 type Game struct {
