@@ -429,15 +429,18 @@ func (g *Game) MaskedWord() string {
 
 	for i, ch := range word {
 
+		// preserve spaces between words
 		if ch == ' ' {
-			result += "  "
+			result += "   "
 			continue
 		}
 
+		// revealed letter
 		if g.CurrentTurn.RevealedIndexes[i] {
 			result += string(ch) + " "
 		} else {
-			result += "_ "
+			// hidden letter
+			result += "▢ "
 		}
 	}
 
