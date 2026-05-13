@@ -492,6 +492,7 @@ func (g *Game) Snapshot() GameSnapshot {
 		snap.DrawerID = g.CurrentTurn.DrawerID
 		snap.Phase = g.CurrentTurn.Phase
 		snap.MaskedWord = g.MaskedWord()
+		snap.WordLengthHint = g.WordLengthHint()
 
 		if !g.CurrentTurn.SelectionDeadline.IsZero() {
 			d := g.CurrentTurn.SelectionDeadline
