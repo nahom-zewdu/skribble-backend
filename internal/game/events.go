@@ -21,6 +21,7 @@ const (
 	EventWordSelectionStarted EventType = "word_selection_started"
 	EventSelectionTimeout     EventType = "selection_timeout"
 	EventDrawingTimeout       EventType = "drawing_timeout"
+	EventHintRevealed         EventType = "hint_revealed"
 )
 
 type GameEvent struct {
