@@ -400,16 +400,31 @@ func (g *Game) HandleTimeouts() ([]GameEvent, error) {
 	return nil, nil
 }
 
-// MaskedWord returns the current word masked for guessing players.
+// MaskedWord returns the current word with unrevealed letters masked for hint system.
 func (g *Game) MaskedWord() string {
 	if g.CurrentTurn == nil || g.CurrentTurn.Word == "" {
 		return ""
 	}
-	mask := ""
-	for range g.CurrentTurn.Word {
-		mask += "_ "
+
+	word := []rune(g.CurrentTurn.Word)
+
+	result := ""
+
+	for i, ch := range word {
+
+		if ch == ' ' {
+			result += "  "
+			continue
+		}
+
+		if g.CurrentTurn.RevealedIndexes[i] {
+			result += string(ch) + " "
+		} else {
+			result += "_ "
+		}
 	}
-	return mask
+
+	return result
 }
 
 // AllGuessersFinished checks if all guessers have guessed correctly.
