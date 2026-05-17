@@ -19,7 +19,16 @@ func NewHTTPServer(cfg *config.Config) *HTTPServer {
 	}
 }
 
+// Start initializes the HTTP server and listens for incoming requests on the configured port.
 func (s *HTTPServer) Start() error {
-	http.HandleFunc("/ws", s.handleWebSocket)
-	return http.ListenAndServe(s.cfg.Port, nil)
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/ws", s.handleWebSocket)
+
+	server := &http.Server{
+		Addr:    s.cfg.Port,
+		Handler: mux,
+	}
+
+	return server.ListenAndServe()
 }
