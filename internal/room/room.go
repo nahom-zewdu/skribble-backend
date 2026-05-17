@@ -1,79 +1,98 @@
 // internal/room/room.go
-// This file defines the Room struct, which represents a game room in the Skribble backend.
-// It manages connected clients, handles incoming messages, and maintains the game state for that room.
-// The Room struct includes methods for registering and unregistering clients, handling client messages, and broadcasting system messages to all clients in the room.
+// This file defines the Room struct, which manages a single game room in the Skribble backend.
+// It handles client registration, message processing, and game state management for the room.
+// The Room struct interacts with the Game logic to manage turns, scoring, and player actions.
 package room
 
 import (
 	"encoding/json"
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
+	"github.com/nahom-zewdu/skribble-backend/internal/engine"
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
 	"github.com/nahom-zewdu/skribble-backend/internal/transport"
+)
+
+type RoomType string
+
+const (
+	PublicRoom  RoomType = "public"
+	PrivateRoom RoomType = "private"
 )
 
 type Room struct {
 	ID string
 
-	// Active connected clients in this room
-	clients map[string]*client.Client
+	Type RoomType
 
-	// Internal event channels
+	MaxPlayers int
+
+	clients map[string]*client.Client
+	manager *Manager
+
 	register   chan *client.Client
 	unregister chan *client.Client
 	incoming   chan clientMessage
 
-	// Game state (pure logic container for now)
-	game *game.Game
+	engine *engine.Engine
 }
 
-// Internal wrapper to preserve sender context
 type clientMessage struct {
 	client  *client.Client
 	message []byte
 }
 
-// NewRoom creates a room and starts its event loop.
-func NewRoom(id string) *Room {
+func NewRoom(id string, roomType RoomType, m *Manager) *Room {
+	g := game.NewGame()
+	e := engine.New(g)
+
 	r := &Room{
 		ID:         id,
+		Type:       roomType,
 		clients:    make(map[string]*client.Client),
+		MaxPlayers: 8,
+		manager:    m,
 		register:   make(chan *client.Client),
 		unregister: make(chan *client.Client),
 		incoming:   make(chan clientMessage),
-		game:       game.NewGame(),
+		engine:     e,
 	}
 
 	go r.run()
-
 	return r
 }
 
-// Public API (ONLY THESE)
-// Register adds a client to the room.
 func (r *Room) Register(c *client.Client) {
 	r.register <- c
 }
 
-// Unregister removes a client from the room.
 func (r *Room) Unregister(c *client.Client) {
 	r.unregister <- c
 }
 
-// HandleClientMessage routes a message from a client into the room.
 func (r *Room) HandleClientMessage(c *client.Client, msg []byte) {
-	r.incoming <- clientMessage{
-		client:  c,
-		message: msg,
-	}
+	r.incoming <- clientMessage{client: c, message: msg}
 }
 
-// Room Event Loop
-// run is the single authority over room state.
+func (r *Room) ClientCount() int {
+	return len(r.clients)
+}
+
+// run is the main loop for the room.
+// It delegates all game-related decisions to the Engine and only reacts to emitted events.
 func (r *Room) run() {
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+
 	for {
 		select {
+
+		case <-ticker.C:
+			events := r.engine.Tick()
+			r.handleEvents(events)
 
 		case c := <-r.register:
 			r.clients[c.ID] = c
@@ -85,6 +104,12 @@ func (r *Room) run() {
 				close(c.Send)
 				r.onLeave(c)
 			}
+			if r.ClientCount() <= 0 {
+				log.Printf("[room] No clients left in room %s, deleting room\n", r.ID)
+				r.manager.DeleteRoom(r.ID)
+
+				return
+			}
 
 		case msg := <-r.incoming:
 			r.onMessage(msg.client, msg.message)
@@ -92,105 +117,366 @@ func (r *Room) run() {
 	}
 }
 
-// Internal Handlers
-// onJoin handles logic when a player joins.
+// --------------------
+// JOIN / LEAVE
+// --------------------
+
 func (r *Room) onJoin(c *client.Client) {
-	log.Println("Player joined:", c.Name)
-
-	r.broadcastSystem(c.Name + " joined the room")
-
-	// Auto-start when at least 2 players are present
-	if len(r.clients) >= 2 && r.game.State == game.Waiting {
-		r.game.State = game.Playing
-		r.game.CurrentTurn = 1
-		r.broadcastSystem("Game started")
-	} else if len(r.clients) < 2 {
-		r.broadcastSystem("Waiting for players...")
-	}
-}
-
-// onLeave handles logic when a player disconnects.
-func (r *Room) onLeave(c *client.Client) {
-	log.Println("Player left:", c.Name)
-
-	r.broadcastSystem(c.Name + " left the room")
-
-	// Pause game if fewer than 2 players remain
-	if len(r.clients) < 2 {
-		r.game.State = game.Paused
-		r.broadcastSystem("Game paused. Waiting for players...")
-	}
-
-	// If empty, room manager may clean this later
-	if len(r.clients) == 0 {
-		log.Println("Room empty:", r.ID)
-	}
-}
-
-// onMessage handles incoming client messages and routes them based on type.
-func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
-	var chat transport.ChatMessage
-
-	if err := json.Unmarshal(raw, &chat); err != nil {
-		log.Println("invalid chat payload:", err)
-		return
-	}
-
-	outgoing := transport.Message{
-		Type: "chat",
-		Data: map[string]interface{}{
-			"sender": sender.Name,
-			"text":   chat.Text,
-		},
-	}
-
-	payload, err := json.Marshal(outgoing)
+	events, err := r.engine.AddPlayer(c.ID, c.Name)
 	if err != nil {
-		log.Println("marshal error:", err)
+		log.Println("engine AddPlayer error:", err)
 		return
 	}
 
-	for _, c := range r.clients {
-		c.Send <- payload
-	}
+	snapshot := r.engine.Snapshot()
+	snapshot.SelfID = c.ID
+	snapshot.RoomID = r.ID
+
+	c.Send <- r.mustMarshal(transport.Message{
+		Type: "game_snapshot",
+		Data: snapshot,
+	})
+
+	r.handleEvents(events)
 }
 
-// onMessage handles incoming client messages.
+// onLeave handles player removal and delegates domain updates to the Engine.
+func (r *Room) onLeave(c *client.Client) {
+	events, err := r.engine.RemovePlayer(c.ID)
+	if err != nil {
+		log.Println("engine RemovePlayer error:", err)
+		return
+	}
+
+	r.handleEvents(events)
+}
+
+// onMessage routes incoming client messages to the appropriate Engine command.
 func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	var incoming transport.ClientMessage
-
 	if err := json.Unmarshal(raw, &incoming); err != nil {
-		log.Println("invalid message format:", err)
 		return
 	}
+
+	log.Printf("incoming: %s from %s", incoming.Type, sender.ID)
 
 	switch incoming.Type {
 
 	case "chat":
 		r.handleChat(sender, incoming.Data)
 
-	default:
-		log.Println("unknown message type:", incoming.Type)
+	case "select_word":
+		var data struct {
+			Word string `json:"word"`
+		}
+		if err := json.Unmarshal(incoming.Data, &data); err != nil {
+			return
+		}
+
+		events, err := r.engine.SelectWord(sender.ID, data.Word)
+		if err != nil {
+			log.Println("SelectWord error:", err)
+			return
+		}
+
+		r.handleEvents(events)
+
+	case "draw_start":
+		r.handleDrawStart(sender, incoming.Data)
+
+	case "draw_move":
+		r.handleDrawMove(sender, incoming.Data)
+
+	case "draw_end":
+		r.handleDrawEnd(sender)
+
+	case "clear_canvas":
+		r.handleClearCanvas(sender)
 	}
 }
 
-// Internal Utilities
-// broadcastSystem sends a system message to all clients.
-func (r *Room) broadcastSystem(message string) {
-	outgoing := transport.Message{
-		Type: "system",
-		Data: transport.SystemMessage{
-			Text: message,
-		},
-	}
+// --------------------
+// CHAT / GUESS
+// --------------------
 
-	payload, err := json.Marshal(outgoing)
-	if err != nil {
-		log.Println("system message marshal error:", err)
+func (r *Room) handleChat(sender *client.Client, raw json.RawMessage) {
+	var chat transport.ChatMessage
+	if err := json.Unmarshal(raw, &chat); err != nil {
 		return
 	}
+
+	// drawer or already-guessed players cannot chat
+	if !r.engine.CanChat(sender.ID) {
+		return
+	}
+
+	events, err := r.engine.Guess(sender.ID, chat.Text)
+	if err != nil {
+		log.Println("Guess error:", err)
+	}
+
+	if len(events) > 0 {
+		r.handleEvents(events)
+		return
+	}
+
+	r.broadcastChat(sender.Name, chat.Text)
+}
+
+// --------------------
+// DRAWING HELPERS
+// --------------------
+
+func (r *Room) isDrawer(sender *client.Client) bool {
+	snap := r.engine.Snapshot()
+	return snap.DrawerID == sender.ID
+}
+
+func (r *Room) isDrawingPhase() bool {
+	snap := r.engine.Snapshot()
+	return snap.Phase == game.PhaseDrawing
+}
+
+// --------------------
+// DRAW EVENTS
+// --------------------
+
+func (r *Room) handleDrawStart(sender *client.Client, raw json.RawMessage) {
+	log.Println("draw_start accepted")
+
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
+		return
+	}
+
+	var data transport.DrawStart
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return
+	}
+
+	r.broadcastDraw(sender.ID, "draw_start", data)
+}
+
+func (r *Room) handleDrawMove(sender *client.Client, raw json.RawMessage) {
+	log.Println("draw_move accepted")
+
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
+		return
+	}
+
+	var data transport.DrawMove
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return
+	}
+
+	// Abuse protection
+	if len(data.Stroke.Points) == 0 || len(data.Stroke.Points) > 50 {
+		return
+	}
+
+	if data.Stroke.Thickness < 1 || data.Stroke.Thickness > 64 {
+		return
+	}
+
+	for _, p := range data.Stroke.Points {
+		if p.X < 0 || p.Y < 0 || p.X > 2000 || p.Y > 2000 {
+			return
+		}
+	}
+
+	r.broadcastDraw(sender.ID, "draw_move", data)
+}
+
+// handleDrawEnd processes the end of a drawing action and broadcasts it to other clients.
+func (r *Room) handleDrawEnd(sender *client.Client) {
+	log.Println("draw_end accepted")
+
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
+		return
+	}
+
+	r.broadcastDraw(sender.ID, "draw_end", nil)
+}
+
+// handleClearCanvas processes a canvas clear action from the drawer and broadcasts it to other clients.
+func (r *Room) handleClearCanvas(sender *client.Client) {
+	log.Println("clear_canvas accepted")
+
+	if !r.isDrawer(sender) || !r.isDrawingPhase() {
+		return
+	}
+
+	r.broadcastAll("clear_canvas", nil)
+}
+
+// --------------------
+// BROADCAST HELPERS
+// --------------------
+
+func (r *Room) broadcastDraw(senderID, eventType string, data interface{}) {
+	msg := transport.Message{
+		Type: eventType,
+		Data: data,
+	}
+
+	payload := r.mustMarshal(msg)
+
+	for _, c := range r.clients {
+		if c.ID == senderID {
+			continue
+		}
+		c.Send <- payload
+	}
+}
+
+func (r *Room) broadcastAll(eventType string, data interface{}) {
+	log.Println("broadcasting all:", eventType, data)
+
+	msg := transport.Message{
+		Type: eventType,
+		Data: data,
+	}
+
+	payload := r.mustMarshal(msg)
 
 	for _, c := range r.clients {
 		c.Send <- payload
 	}
+}
+
+// --------------------
+// ENGINE EVENTS
+// --------------------
+
+func (r *Room) handleEvents(events []game.GameEvent) {
+	for _, e := range events {
+
+		switch e.Type {
+
+		case game.EventPlayerJoined:
+			payload := e.Payload.(game.PlayerJoinedPayload)
+			r.broadcastSystem(payload.Name + " joined")
+
+		case game.EventPlayerLeft:
+			payload := e.Payload.(game.PlayerLeftPayload)
+			r.broadcastSystem(payload.Name + " left")
+
+		case game.EventGameStarted:
+			r.broadcastSystem("Game started")
+
+		case game.EventTurnStarted:
+			r.broadcastAll("clear_canvas", nil)
+
+			payload := e.Payload.(game.TurnStartedPayload)
+			r.broadcastAll("turn_started", payload)
+
+		case game.EventWordSelectionStarted:
+			payload := e.Payload.(game.WordSelectionStartedPayload)
+			r.broadcastAll("word_selection_started", payload)
+
+		case game.EventWordSelected:
+			r.broadcastAll("clear_canvas", nil)
+
+			payload := e.Payload.(game.WordSelectedPayload)
+
+			for _, c := range r.clients {
+				if c.ID == payload.DrawerID {
+					c.Send <- r.mustMarshal(transport.Message{
+						Type: "drawing_started",
+						Data: map[string]interface{}{
+							"word":           payload.Word,
+							"deadline":       payload.PlayDeadline,
+							"maskedWord":     r.engine.Snapshot().MaskedWord,
+							"wordLengthHint": r.engine.Snapshot().WordLengthHint,
+						},
+					})
+				} else {
+					c.Send <- r.mustMarshal(transport.Message{
+						Type: "drawing_started",
+						Data: map[string]interface{}{
+							"deadline":       payload.PlayDeadline,
+							"maskedWord":     r.engine.Snapshot().MaskedWord,
+							"wordLengthHint": r.engine.Snapshot().WordLengthHint,
+						},
+					})
+				}
+			}
+
+		case game.EventCorrectGuess:
+			payload := e.Payload.(game.CorrectGuessPayload)
+			r.broadcastCorrectGuess(payload)
+
+		case game.EventTurnEnded:
+			payload := e.Payload.(game.TurnEndedPayload)
+			r.broadcastAll("turn_ended", payload)
+
+		case game.EventGameEnded:
+			r.broadcastAll("clear_canvas", nil)
+
+			payload := e.Payload.(game.GameEndedPayload)
+			r.broadcastAll("game_ended", payload)
+
+		case game.EventSelectionTimeout:
+			payload := e.Payload.(map[string]interface{})
+			r.broadcastAll("selection_timeout", payload)
+
+		case game.EventDrawingTimeout:
+			payload := e.Payload.(map[string]interface{})
+			r.broadcastAll("drawing_timeout", payload)
+
+		case game.EventHintRevealed:
+			payload := map[string]interface{}{
+				"maskedWord":     r.engine.Snapshot().MaskedWord,
+				"wordLengthHint": r.engine.Snapshot().WordLengthHint,
+			}
+			r.broadcastAll("hint_revealed", payload)
+		}
+	}
+}
+
+// --------------------
+// GENERIC BROADCASTS
+// --------------------
+
+func (r *Room) broadcastChat(sender, text string) {
+	r.broadcastAll("chat", map[string]interface{}{
+		"sender": sender,
+		"text":   text,
+	})
+}
+
+func (r *Room) broadcastCorrectGuess(payload game.CorrectGuessPayload) {
+	// dedicated event
+	r.broadcastAll("correct_guess", payload)
+
+	// system chat message
+	r.broadcastSystem(
+		payload.PlayerName + " guessed correctly! +" + strconv.Itoa(payload.Score),
+	)
+}
+
+func (r *Room) broadcastSystem(text string) {
+	r.broadcastAll("system", transport.SystemMessage{Text: text})
+}
+
+// --------------------
+// UTIL
+// --------------------
+
+func (r *Room) mustMarshal(v interface{}) []byte {
+	b, err := json.Marshal(v)
+	if err != nil {
+		log.Println("marshal error:", err)
+		return []byte("{}")
+	}
+	return b
+}
+
+// IsFull checks if the room has reached its maximum player capacity by comparing the current client count with the MaxPlayers limit.
+func (r *Room) IsFull() bool {
+	return r.ClientCount() >= r.MaxPlayers
+}
+
+// IsJoinable determines if new players can join the room by checking if the room is not full.
+func (r *Room) IsJoinable() bool {
+	return !r.IsFull()
 }

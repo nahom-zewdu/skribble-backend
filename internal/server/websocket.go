@@ -29,24 +29,57 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	name := r.URL.Query().Get("name")
+	mode := r.URL.Query().Get("mode")
 	roomID := r.URL.Query().Get("room")
 
-	if name == "" || roomID == "" {
+	if name == "" || mode == "" {
+		conn.Close()
+		return
+	}
+
+	var room *room.Room
+
+	switch mode {
+
+	case "public":
+		room = roomManager.FindOrCreatePublicRoom()
+
+	case "private_create":
+		room = roomManager.CreatePrivateRoom()
+
+	case "private_join":
+		if roomID == "" {
+			conn.Close()
+			return
+		}
+
+		privateRoom, ok := roomManager.GetPrivateRoom(roomID)
+		if !ok {
+			conn.Close()
+			return
+		}
+
+		if !privateRoom.IsJoinable() {
+			conn.Close()
+			return
+		}
+
+		room = privateRoom
+
+	default:
 		conn.Close()
 		return
 	}
 
 	clientID := utils.GenerateID()
-	c := client.NewClient(clientID, name, conn)
-	c.RoomID = roomID
 
-	room := roomManager.GetOrCreateRoom(roomID)
+	c := client.NewClient(clientID, name, conn)
+	c.RoomID = room.ID
+
 	room.Register(c)
 
-	go c.WritePump() // Start the write pump in a separate goroutine to handle outgoing messages
+	go c.WritePump()
 
-	// Start the read pump in the current goroutine to handle incoming messages
-	// The read pump will call the provided onMessage and onClose callbacks
 	c.ReadPump(
 		func(message []byte) {
 			room.HandleClientMessage(c, message)

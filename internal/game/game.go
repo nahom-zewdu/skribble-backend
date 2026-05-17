@@ -1,8 +1,17 @@
 // internal/game/game.go
-// This file defines the Game struct, which represents the state of a game session in the Skribble backend.
-// It includes fields for the current turn, maximum turns, and game state, along with a constructor function to initialize a new game.
-
+// This file defines the core game logic for Skribble, including the game state machine, player management, and turn handling.
+// It provides the necessary structures and methods to manage the game flow, track player scores, and handle game state transitions.
 package game
+
+import (
+	"errors"
+	"log"
+	"time"
+)
+
+/*
+Game State Machine
+*/
 
 type State string
 
@@ -13,16 +22,205 @@ const (
 	Ended   State = "ended"
 )
 
+type TurnPhase string
+
+const (
+	PhaseSelecting TurnPhase = "selecting"
+	PhaseDrawing   TurnPhase = "drawing"
+	PhaseEnded     TurnPhase = "ended"
+)
+
+type Player struct {
+	ID    string
+	Name  string
+	Score int
+}
+
+type Turn struct {
+	Number   int
+	DrawerID string
+
+	// Word system
+	Word    string   // final selected word
+	Choices []string // 3 selectable words
+	Phase   TurnPhase
+
+	// Timing
+	SelectionDeadline time.Time
+	PlayDeadline      time.Time
+	StartTime         time.Time
+
+	Guessed   map[string]bool
+	Completed bool
+
+	// Hint system
+	RevealedIndexes map[int]bool
+	FirstHintGiven  bool
+	SecondHintGiven bool
+}
+
 type Game struct {
-	CurrentTurn int
-	MaxTurns    int
-	State       State
+	State                  State
+	MaxTurns               int
+	CurrentTurn            *Turn
+	RestartDeadline        *time.Time
+	TurnTransitionDeadline *time.Time
+
+	Players     []*Player
+	playerIndex int
+
+	wordProvider WordProvider
+}
+
+type PlayerSnapshot struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Score int    `json:"score"`
+}
+
+type GameSnapshot struct {
+	State      State            `json:"state"`
+	TurnNumber int              `json:"turnNumber"`
+	MaxTurns   int              `json:"maxTurns"`
+	DrawerID   string           `json:"drawerID"`
+	Phase      TurnPhase        `json:"phase"`
+	Players    []PlayerSnapshot `json:"players"`
+	SelfID     string           `json:"selfID"`
+
+	RoomID string `json:"roomID"`
+
+	MaskedWord     string `json:"maskedWord"`
+	WordLengthHint string `json:"wordLengthHint"`
+
+	SelectionDeadline  *time.Time `json:"selectionDeadline,omitempty"`
+	PlayDeadline       *time.Time `json:"playDeadline,omitempty"`
+	TransitionDeadline *time.Time `json:"transitionDeadline,omitempty"`
+	RestartDeadline    *time.Time `json:"restartDeadline,omitempty"`
 }
 
 func NewGame() *Game {
 	return &Game{
-		CurrentTurn: 0,
-		MaxTurns:    9, // fixed as per your rule
-		State:       Waiting,
+		State:        Waiting,
+		MaxTurns:     9,
+		Players:      []*Player{},
+		wordProvider: NewStaticWordProvider(),
 	}
+}
+
+// AddPlayer adds a new player to the game and emits a PlayerJoined event.
+func (g *Game) AddPlayer(id, name string) ([]GameEvent, error) {
+	// Check if player already exists
+	for _, p := range g.Players {
+		if p.ID == id {
+			return nil, errors.New("player already exists")
+		}
+	}
+
+	player := &Player{
+		ID:   id,
+		Name: name,
+	}
+	var events []GameEvent
+
+	g.Players = append(g.Players, player)
+	log.Printf("[game] Player %s joined the game\n", name)
+
+	events = append(events, GameEvent{
+		Type:      EventPlayerJoined,
+		Timestamp: time.Now(),
+		Payload: PlayerJoinedPayload{
+			PlayerID: player.ID,
+			Name:     player.Name,
+		},
+	})
+
+	return events, nil
+}
+
+// RemovePlayer removes a player and emits PlayerLeft and potentially GameEnded events.
+func (g *Game) RemovePlayer(id string) ([]GameEvent, error) {
+	if len(g.Players) == 0 {
+		return nil, nil
+	}
+
+	removedIndex := -1
+	var removedPlayer *Player
+	for i, p := range g.Players {
+		if p.ID == id {
+			removedIndex = i
+			removedPlayer = p
+			break
+		}
+	}
+
+	if removedIndex == -1 {
+		return nil, nil
+	}
+
+	isDrawer := false
+	if g.CurrentTurn != nil && g.CurrentTurn.DrawerID == id {
+		isDrawer = true
+	}
+
+	// Remove from slice
+	g.Players = append(g.Players[:removedIndex], g.Players[removedIndex+1:]...)
+
+	// Fix rotation index
+	if removedIndex < g.playerIndex {
+		g.playerIndex--
+	}
+	if g.playerIndex >= len(g.Players) {
+		g.playerIndex = 0
+	}
+
+	events := []GameEvent{
+		{
+			Type:      EventPlayerLeft,
+			Timestamp: time.Now(),
+			Payload: PlayerLeftPayload{
+				PlayerID: removedPlayer.ID,
+				Name:     removedPlayer.Name,
+			},
+		},
+	}
+
+	// If less than 2 players remain → end game
+	if len(g.Players) < 2 {
+		g.State = Ended
+		if g.CurrentTurn != nil && !g.CurrentTurn.Completed {
+			g.CurrentTurn.Completed = true
+			g.CurrentTurn.Phase = PhaseEnded
+		}
+
+		events = append(events, GameEvent{
+			Type:      EventGameEnded,
+			Timestamp: time.Now(),
+			Payload: GameEndedPayload{
+				Players: g.PlayerSnapshot(),
+			},
+		})
+		return events, nil
+	}
+
+	// If drawer left, end turn through domain
+	if isDrawer && g.CurrentTurn != nil && !g.CurrentTurn.Completed {
+		turnEvents, err := g.EndTurn()
+		events = append(events, turnEvents...)
+		return events, err
+	}
+
+	return events, nil
+}
+
+// CanStart checks if the game can transition from waiting to playing state.
+func (g *Game) CanStart() bool {
+	if g.State == Waiting && len(g.Players) >= 2 {
+		return true
+	}
+	return false
+}
+
+// Start initializes the game state and starts the first turn.
+func (g *Game) PlayerCount() int {
+	return len(g.Players)
 }
