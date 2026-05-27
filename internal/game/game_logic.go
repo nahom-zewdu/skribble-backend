@@ -200,7 +200,8 @@ func (g *Game) Guess(playerID, guess string) ([]GameEvent, error) {
 	if g.CurrentTurn.Guessed[playerID] {
 		return nil, errors.New("already guessed")
 	}
-	if guess != g.CurrentTurn.Word {
+
+	if !strings.EqualFold(guess, g.CurrentTurn.Word) {
 		return nil, nil
 	}
 
