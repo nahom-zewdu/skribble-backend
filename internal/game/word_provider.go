@@ -54,38 +54,73 @@ func NewStaticWordProvider() *StaticWordProvider {
 	}
 }
 
-// GenerateChoices returns a balanced and randomized set of words.
+// GenerateChoices returns randomized words with category diversity.
 func (p *StaticWordProvider) GenerateChoices(n int) []string {
 	if n <= 0 {
 		return []string{}
 	}
 
-	// STEP 1: FILTER INVALID WORDS
-	// validWords := p.filterValidWords()
-	validWords := p.words
-
-	if len(validWords) == 0 {
+	if len(p.words) == 0 {
 		return []string{}
 	}
 
-	if len(validWords) <= n {
-		return p.extractTexts(validWords)
+	if len(p.words) <= n {
+		return p.extractTexts(p.words)
 	}
 
-	// STEP 2: GROUP WORDS BY CATEGORY
-	categoryBuckets := p.groupByCategory(validWords)
+	// Group words by category
+	categoryBuckets := p.groupByCategory(p.words)
 
-	// STEP 3: BUILD DIFFICULTY TARGETS
-	difficultyTargets := p.buildDifficultyTargets(n)
+	selected := make([]Word, 0, n)
+	usedWords := make(map[string]bool)
 
-	// STEP 4: SELECT BALANCED WORDS
-	selected := p.selectBalancedWords(
-		categoryBuckets,
-		difficultyTargets,
-		n,
-	)
+	// Extract category list
+	categories := make([]Category, 0, len(categoryBuckets))
+	for category := range categoryBuckets {
+		categories = append(categories, category)
+	}
 
-	// STEP 5: FINAL RANDOM SHUFFLE
+	// Shuffle categories
+	p.rng.Shuffle(len(categories), func(i, j int) {
+		categories[i], categories[j] = categories[j], categories[i]
+	})
+
+	// PASS 1:
+	// Try selecting one word per category
+	for _, category := range categories {
+		if len(selected) >= n {
+			break
+		}
+
+		words := categoryBuckets[category]
+
+		word := p.pickRandomUnusedWord(words, usedWords)
+		if word == nil {
+			continue
+		}
+
+		selected = append(selected, *word)
+		usedWords[word.Text] = true
+	}
+
+	// PASS 2:
+	// Fill remaining slots from any category
+	if len(selected) < n {
+		allWords := p.words
+
+		for len(selected) < n {
+			word := p.pickRandomUnusedWord(allWords, usedWords)
+
+			if word == nil {
+				break
+			}
+
+			selected = append(selected, *word)
+			usedWords[word.Text] = true
+		}
+	}
+
+	// Final shuffle
 	p.rng.Shuffle(len(selected), func(i, j int) {
 		selected[i], selected[j] = selected[j], selected[i]
 	})
@@ -93,29 +128,26 @@ func (p *StaticWordProvider) GenerateChoices(n int) []string {
 	return p.extractTexts(selected)
 }
 
-func (p *StaticWordProvider) filterValidWords() []Word {
-	result := make([]Word, 0)
+func (p *StaticWordProvider) pickRandomUnusedWord(
+	words []Word,
+	usedWords map[string]bool,
+) *Word {
+	candidates := make([]Word, 0)
 
-	seen := make(map[string]bool)
-
-	for _, word := range p.words {
-		if !word.Enabled {
+	for _, word := range words {
+		if usedWords[word.Text] {
 			continue
 		}
 
-		if word.Text == "" {
-			continue
-		}
-
-		if seen[word.Text] {
-			continue
-		}
-
-		seen[word.Text] = true
-		result = append(result, word)
+		candidates = append(candidates, word)
 	}
 
-	return result
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	chosen := candidates[p.rng.Intn(len(candidates))]
+	return &chosen
 }
 
 func (p *StaticWordProvider) groupByCategory(words []Word) map[Category][]Word {
@@ -126,141 +158,6 @@ func (p *StaticWordProvider) groupByCategory(words []Word) map[Category][]Word {
 	}
 
 	return result
-}
-
-func (p *StaticWordProvider) buildDifficultyTargets(n int) []Difficulty {
-	targets := make([]Difficulty, 0, n)
-
-	// Balanced distribution:
-	// Easy -> Medium -> Hard rotation
-	pattern := []Difficulty{
-		Easy,
-		Medium,
-		Hard,
-	}
-
-	for i := 0; i < n; i++ {
-		targets = append(targets, pattern[i%len(pattern)])
-	}
-
-	// Shuffle targets slightly to avoid predictability
-	p.rng.Shuffle(len(targets), func(i, j int) {
-		targets[i], targets[j] = targets[j], targets[i]
-	})
-
-	return targets
-}
-
-func (p *StaticWordProvider) selectBalancedWords(
-	categoryBuckets map[Category][]Word,
-	difficultyTargets []Difficulty,
-	n int,
-) []Word {
-	selected := make([]Word, 0, n)
-
-	usedWords := make(map[string]bool)
-	usedCategories := make(map[Category]bool)
-
-	categories := make([]Category, 0, len(categoryBuckets))
-	for category := range categoryBuckets {
-		categories = append(categories, category)
-	}
-
-	// Shuffle categories for randomness
-	p.rng.Shuffle(len(categories), func(i, j int) {
-		categories[i], categories[j] = categories[j], categories[i]
-	})
-
-	for _, targetDifficulty := range difficultyTargets {
-		if len(selected) >= n {
-			break
-		}
-
-		var chosen *Word
-
-		// First pass:
-		// prefer unused categories
-		for _, category := range categories {
-			if usedCategories[category] {
-				continue
-			}
-
-			word := p.pickWord(
-				categoryBuckets[category],
-				targetDifficulty,
-				usedWords,
-			)
-
-			if word != nil {
-				chosen = word
-				usedCategories[category] = true
-				break
-			}
-		}
-
-		// Second pass:
-		// allow reused categories if needed
-		if chosen == nil {
-			for _, category := range categories {
-				word := p.pickWord(
-					categoryBuckets[category],
-					targetDifficulty,
-					usedWords,
-				)
-
-				if word != nil {
-					chosen = word
-					break
-				}
-			}
-		}
-
-		if chosen != nil {
-			selected = append(selected, *chosen)
-			usedWords[chosen.Text] = true
-		}
-	}
-
-	return selected
-}
-
-func (p *StaticWordProvider) pickWord(
-	words []Word,
-	targetDifficulty Difficulty,
-	usedWords map[string]bool,
-) *Word {
-	candidates := make([]Word, 0)
-
-	// First priority:
-	// exact difficulty match
-	for _, word := range words {
-		if usedWords[word.Text] {
-			continue
-		}
-
-		if word.Difficulty == targetDifficulty {
-			candidates = append(candidates, word)
-		}
-	}
-
-	// Fallback:
-	// any unused word
-	if len(candidates) == 0 {
-		for _, word := range words {
-			if usedWords[word.Text] {
-				continue
-			}
-
-			candidates = append(candidates, word)
-		}
-	}
-
-	if len(candidates) == 0 {
-		return nil
-	}
-
-	chosen := candidates[p.rng.Intn(len(candidates))]
-	return &chosen
 }
 
 func (p *StaticWordProvider) extractTexts(words []Word) []string {
