@@ -53,7 +53,7 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		privateRoom, ok := roomManager.GetPrivateRoom(roomID)
+		privateRoom, ok := roomManager.GetRoom(roomID)
 		if !ok {
 			conn.Close()
 			return
