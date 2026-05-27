@@ -13,12 +13,16 @@ type Category string
 type Difficulty int
 
 const (
-	CategoryFood    Category = "food"
-	CategoryAnimal  Category = "animal"
-	CategoryObject  Category = "object"
-	CategoryAction  Category = "action"
-	CategoryFantasy Category = "fantasy"
-	CategoryPlace   Category = "place"
+	CategoryFood       Category = "food"
+	CategoryAnimal     Category = "animal"
+	CategoryObject     Category = "object"
+	CategoryAction     Category = "action"
+	CategoryFantasy    Category = "fantasy"
+	CategoryPlace      Category = "place"
+	CategoryProfession Category = "profession"
+	CategoryEmotion    Category = "emotion"
+	CategorySports     Category = "sports"
+	CategoryTechnology Category = "technology"
 )
 
 const (
