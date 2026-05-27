@@ -24,6 +24,7 @@ func (s *HTTPServer) Start() error {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/ws", s.handleWebSocket)
+	mux.HandleFunc("/health", s.health)
 
 	server := &http.Server{
 		Addr:    s.cfg.Port,
@@ -31,4 +32,9 @@ func (s *HTTPServer) Start() error {
 	}
 
 	return server.ListenAndServe()
+}
+
+func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("ok"))
 }
