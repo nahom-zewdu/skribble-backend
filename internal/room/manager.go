@@ -85,6 +85,20 @@ func (m *Manager) GetPrivateRoom(id string) (*Room, bool) {
 	return room, true
 }
 
+// JOIN BY ID
+
+func (m *Manager) GetRoom(id string) (*Room, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	room, ok := m.rooms[id]
+	if !ok {
+		return nil, false
+	}
+
+	return room, true
+}
+
 // DELETE
 
 func (m *Manager) DeleteRoom(id string) {
