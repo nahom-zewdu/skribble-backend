@@ -61,7 +61,8 @@ func (p *StaticWordProvider) GenerateChoices(n int) []string {
 	}
 
 	// STEP 1: FILTER INVALID WORDS
-	validWords := p.filterValidWords()
+	// validWords := p.filterValidWords()
+	validWords := p.words
 
 	if len(validWords) == 0 {
 		return []string{}
