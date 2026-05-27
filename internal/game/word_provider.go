@@ -49,29 +49,8 @@ type StaticWordProvider struct {
 
 func NewStaticWordProvider() *StaticWordProvider {
 	return &StaticWordProvider{
-		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
-		words: []Word{
-			{"apple", CategoryFood, Easy, true},
-			{"pizza", CategoryFood, Easy, true},
-			{"sushi", CategoryFood, Medium, true},
-
-			{"dog", CategoryAnimal, Easy, true},
-			{"octopus", CategoryAnimal, Medium, true},
-			{"giraffe", CategoryAnimal, Easy, true},
-
-			{"phone", CategoryObject, Easy, true},
-			{"guitar", CategoryObject, Medium, true},
-			{"microscope", CategoryObject, Hard, true},
-
-			{"dancing", CategoryAction, Medium, true},
-			{"juggling", CategoryAction, Hard, true},
-
-			{"dragon", CategoryFantasy, Medium, true},
-			{"wizard", CategoryFantasy, Easy, true},
-
-			{"volcano", CategoryPlace, Medium, true},
-			{"airport", CategoryPlace, Easy, true},
-		},
+		rng:   rand.New(rand.NewSource(time.Now().UnixNano())),
+		words: loadWords(),
 	}
 }
 
