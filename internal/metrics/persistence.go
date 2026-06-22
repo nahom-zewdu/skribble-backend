@@ -5,6 +5,7 @@ package metrics
 
 import (
 	"context"
+	"log"
 	"sync/atomic"
 	"time"
 
@@ -26,6 +27,8 @@ func InitRedis(
 			Password: password,
 		},
 	)
+
+	log.Println("Initialized Redis client for metrics persistence")
 
 	go flushLoop()
 }
