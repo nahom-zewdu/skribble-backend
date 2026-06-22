@@ -23,7 +23,7 @@ func Load() *Config {
 		Port: ":" + port,
 
 		RedisURL: os.Getenv(
-			"Redis_URL",
+			"REDIS_URL",
 		),
 	}
 }
