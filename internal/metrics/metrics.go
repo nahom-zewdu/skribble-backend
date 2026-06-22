@@ -64,3 +64,31 @@ func DecRooms() {
 		-1,
 	)
 }
+
+// AddMessage increments the total message count, total bytes, and optionally the draw and chat message counts based on the provided parameters.
+// It uses atomic operations to ensure thread safety when updating these metrics.
+func AddMessage(size int, isDraw bool, isChat bool) {
+	atomic.AddInt64(
+		&M.TotalMessages,
+		1,
+	)
+
+	atomic.AddInt64(
+		&M.TotalBytes,
+		int64(size),
+	)
+
+	if isDraw {
+		atomic.AddInt64(
+			&M.DrawMessages,
+			1,
+		)
+	}
+
+	if isChat {
+		atomic.AddInt64(
+			&M.ChatMessages,
+			1,
+		)
+	}
+}
