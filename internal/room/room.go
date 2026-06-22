@@ -221,6 +221,14 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 		}
 
 		metrics.AddLatency(data.Value)
+
+	case "ping":
+		r.broadcastAll(
+			"pong",
+			map[string]int64{
+				"ts": time.Now().UnixMilli(),
+			},
+		)
 	}
 }
 
