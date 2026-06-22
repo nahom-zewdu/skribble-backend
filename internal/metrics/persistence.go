@@ -18,17 +18,20 @@ var redisClient *redis.Client
 
 func InitRedis(
 	url string,
-	password string,
 ) {
 
-	redisClient = redis.NewClient(
-		&redis.Options{
-			Addr:     url,
-			Password: password,
-		},
-	)
+	opt, err := redis.ParseURL(url)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	log.Println("Initialized Redis client for metrics persistence")
+	redisClient = redis.NewClient(opt)
+
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println("Redis connected")
 
 	go flushLoop()
 }
