@@ -44,3 +44,23 @@ func DecConnections() {
 		-1,
 	)
 }
+
+// IncRooms increments the count of active rooms and updates the peak rooms if the current count exceeds the previous peak.
+func IncRooms() {
+	current := atomic.AddInt64(
+		&M.ActiveRooms,
+		1,
+	)
+
+	updatePeak(
+		&M.PeakRooms,
+		current,
+	)
+}
+
+func DecRooms() {
+	atomic.AddInt64(
+		&M.ActiveRooms,
+		-1,
+	)
+}
