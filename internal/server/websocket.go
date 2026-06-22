@@ -88,6 +88,7 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		},
 		func() {
 			room.Unregister(c)
+			metrics.DecConnections() // Decrement the active connections metric when a client disconnects
 		},
 	)
 }
