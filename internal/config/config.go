@@ -9,8 +9,7 @@ import "os"
 type Config struct {
 	Port string
 
-	RedisURL   string
-	RedisToken string
+	RedisURL string
 }
 
 func Load() *Config {
@@ -24,11 +23,7 @@ func Load() *Config {
 		Port: ":" + port,
 
 		RedisURL: os.Getenv(
-			"UPSTASH_REDIS_REST_URL",
-		),
-
-		RedisToken: os.Getenv(
-			"UPSTASH_REDIS_REST_TOKEN",
+			"Redis_URL",
 		),
 	}
 }
