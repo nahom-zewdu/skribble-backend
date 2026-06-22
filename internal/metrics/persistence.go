@@ -41,3 +41,59 @@ func flushLoop() {
 		Flush()
 	}
 }
+
+// Flush saves the current metrics to Redis. It uses a pipeline to set multiple keys in a single round trip for efficiency. If the Redis client is not initialized, it simply returns without doing anything.
+func Flush() {
+
+	if redisClient == nil {
+		return
+	}
+
+	m := Snapshot()
+
+	pipe := redisClient.Pipeline()
+
+	pipe.Set(
+		ctx,
+		"peak_connections",
+		m.PeakConnections,
+		0,
+	)
+
+	pipe.Set(
+		ctx,
+		"peak_rooms",
+		m.PeakRooms,
+		0,
+	)
+
+	pipe.Set(
+		ctx,
+		"total_messages",
+		m.TotalMessages,
+		0,
+	)
+
+	pipe.Set(
+		ctx,
+		"total_bytes",
+		m.TotalBytes,
+		0,
+	)
+
+	pipe.Set(
+		ctx,
+		"draw_messages",
+		m.DrawMessages,
+		0,
+	)
+
+	pipe.Set(
+		ctx,
+		"chat_messages",
+		m.ChatMessages,
+		0,
+	)
+
+	_, _ = pipe.Exec(ctx)
+}
