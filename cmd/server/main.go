@@ -7,11 +7,14 @@ import (
 	"log"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/config"
+	"github.com/nahom-zewdu/skribble-backend/internal/metrics"
 	"github.com/nahom-zewdu/skribble-backend/internal/server"
 )
 
 func main() {
 	cfg := config.Load()
+
+	metrics.InitRedis(cfg.RedisURL, cfg.RedisToken)
 
 	srv := server.NewHTTPServer(cfg)
 
