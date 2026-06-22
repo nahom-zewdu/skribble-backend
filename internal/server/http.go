@@ -4,9 +4,11 @@
 package server
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/nahom-zewdu/skribble-backend/internal/config"
+	"github.com/nahom-zewdu/skribble-backend/internal/metrics"
 )
 
 type HTTPServer struct {
@@ -25,6 +27,7 @@ func (s *HTTPServer) Start() error {
 
 	mux.HandleFunc("/ws", s.handleWebSocket)
 	mux.HandleFunc("/health", s.health)
+	mux.HandleFunc("/metrics", s.metrics)
 
 	server := &http.Server{
 		Addr:    s.cfg.Port,
@@ -37,4 +40,8 @@ func (s *HTTPServer) Start() error {
 func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("ok"))
+}
+
+func (s *HTTPServer) metrics(w http.ResponseWriter, r *http.Request) {
+	json.NewEncoder(w).Encode(metrics.M)
 }
