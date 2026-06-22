@@ -9,6 +9,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/nahom-zewdu/skribble-backend/internal/metrics"
 )
 
 const roomCodeCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -45,6 +47,7 @@ func (m *Manager) FindOrCreatePublicRoom() *Room {
 
 	room := NewRoom(roomID, PublicRoom, m)
 
+	metrics.IncRooms() // Increment the active rooms metric when a new room is created
 	m.rooms[roomID] = room
 
 	log.Printf("[room manager] Created public room %s\n", roomID)
@@ -61,6 +64,7 @@ func (m *Manager) CreatePrivateRoom() *Room {
 
 	room := NewRoom(roomID, PrivateRoom, m)
 
+	metrics.IncRooms() // Increment the active rooms metric when a new room is created
 	m.rooms[roomID] = room
 
 	log.Printf("[room manager] Created private room %s\n", roomID)
