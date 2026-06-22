@@ -13,6 +13,7 @@ import (
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
 	"github.com/nahom-zewdu/skribble-backend/internal/engine"
 	"github.com/nahom-zewdu/skribble-backend/internal/game"
+	"github.com/nahom-zewdu/skribble-backend/internal/metrics"
 	"github.com/nahom-zewdu/skribble-backend/internal/transport"
 )
 
@@ -159,6 +160,20 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 	}
 
 	log.Printf("incoming: %s from %s", incoming.Type, sender.ID)
+
+	isDraw :=
+		incoming.Type == "draw_start" ||
+			incoming.Type == "draw_move" ||
+			incoming.Type == "draw_end"
+
+	isChat :=
+		incoming.Type == "chat"
+
+	metrics.AddMessage(
+		len(raw),
+		isDraw,
+		isChat,
+	)
 
 	switch incoming.Type {
 
