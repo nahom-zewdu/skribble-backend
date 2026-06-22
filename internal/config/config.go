@@ -1,6 +1,6 @@
 // internal/config/config.go
-// This file defines the Config struct, which holds configuration settings for the Skribble backend.
-// The Load function reads configuration values from environment variables and returns a Config instance with the appropriate settings.
+// This file defines the Config struct and the Load function for loading configuration values from environment variables.
+// It includes fields for the server port and Redis connection details.
 
 package config
 
@@ -8,15 +8,27 @@ import "os"
 
 type Config struct {
 	Port string
+
+	RedisURL   string
+	RedisToken string
 }
 
 func Load() *Config {
 	port := os.Getenv("PORT")
+
 	if port == "" {
 		port = "8080"
 	}
 
 	return &Config{
 		Port: ":" + port,
+
+		RedisURL: os.Getenv(
+			"UPSTASH_REDIS_REST_URL",
+		),
+
+		RedisToken: os.Getenv(
+			"UPSTASH_REDIS_REST_TOKEN",
+		),
 	}
 }
