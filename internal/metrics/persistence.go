@@ -33,6 +33,7 @@ func InitRedis(
 
 	log.Println("Redis connected")
 
+	LoadPersisted()
 	go flushLoop()
 }
 
@@ -49,7 +50,10 @@ func flushLoop() {
 	}
 }
 
-// Flush saves the current metrics to Redis. It uses a pipeline to set multiple keys in a single round trip for efficiency. If the Redis client is not initialized, it simply returns without doing anything.
+// Flush saves the current metrics to Redis. It first checks if the Redis client is initialized, and if not, it returns immediately.
+// It then takes a snapshot of the current metrics and uses a Redis transaction to set the total messages, total bytes, draw messages, and chat messages in Redis.
+// It also retrieves the current peak connections and peak rooms from Redis to compare with the current metrics.
+// If the current peak connections or peak rooms exceed the stored values in Redis, it updates those values in Redis as well.
 func Flush() {
 
 	if redisClient == nil {
@@ -58,21 +62,7 @@ func Flush() {
 
 	m := Snapshot()
 
-	pipe := redisClient.Pipeline()
-
-	pipe.Set(
-		ctx,
-		"peak_connections",
-		m.PeakConnections,
-		0,
-	)
-
-	pipe.Set(
-		ctx,
-		"peak_rooms",
-		m.PeakRooms,
-		0,
-	)
+	pipe := redisClient.TxPipeline()
 
 	pipe.Set(
 		ctx,
@@ -102,7 +92,39 @@ func Flush() {
 		0,
 	)
 
-	_, _ = pipe.Exec(ctx)
+	pipe.Get(ctx, "peak_connections")
+	pipe.Get(ctx, "peak_rooms")
+
+	results, err := pipe.Exec(ctx)
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	storedPeakConnections, _ :=
+		results[4].(*redis.StringCmd).Int64()
+
+	storedPeakRooms, _ :=
+		results[5].(*redis.StringCmd).Int64()
+
+	if m.PeakConnections > storedPeakConnections {
+		redisClient.Set(
+			ctx,
+			"peak_connections",
+			m.PeakConnections,
+			0,
+		)
+	}
+
+	if m.PeakRooms > storedPeakRooms {
+		redisClient.Set(
+			ctx,
+			"peak_rooms",
+			m.PeakRooms,
+			0,
+		)
+	}
 }
 
 // Snapshot creates a copy of the current metrics by loading the values atomically.
