@@ -8,6 +8,7 @@
 - `internal/config/config.go` — environment-based runtime configuration
 - `internal/server/http.go` — HTTP routing and server startup
 - `internal/server/websocket.go` — WebSocket upgrade and session initialization
+- `internal/metrics/` - Metrics struct and related functions for tracking various metrics
 - `internal/client/client.go` — connected client read/write pumps
 - `internal/room/manager.go` — room lifecycle and matchmaking
 - `internal/room/room.go` — room event loop, message routing, game integration

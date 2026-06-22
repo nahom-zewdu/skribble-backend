@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/nahom-zewdu/skribble-backend/internal/client"
+	"github.com/nahom-zewdu/skribble-backend/internal/metrics"
 	"github.com/nahom-zewdu/skribble-backend/internal/pkg/utils"
 	"github.com/nahom-zewdu/skribble-backend/internal/room"
 )
@@ -76,6 +77,7 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	c := client.NewClient(clientID, name, conn)
 	c.RoomID = room.ID
 
+	metrics.IncConnections() // Increment the active connections metric when a new client connects
 	room.Register(c)
 
 	go c.WritePump()
@@ -86,6 +88,7 @@ func (s *HTTPServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		},
 		func() {
 			room.Unregister(c)
+			metrics.DecConnections() // Decrement the active connections metric when a client disconnects
 		},
 	)
 }
