@@ -207,6 +207,20 @@ func (r *Room) onMessage(sender *client.Client, raw []byte) {
 
 	case "clear_canvas":
 		r.handleClearCanvas(sender)
+
+	case "latency":
+		var data struct {
+			Value int64 `json:"value"`
+		}
+
+		if err := json.Unmarshal(
+			incoming.Data,
+			&data,
+		); err != nil {
+			return
+		}
+
+		metrics.AddLatency(data.Value)
 	}
 }
 
