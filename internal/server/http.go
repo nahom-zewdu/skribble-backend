@@ -94,7 +94,16 @@ func (s *HTTPServer) metrics(
 		"application/json",
 	)
 
-	json.NewEncoder(w).Encode(
-		metrics.Snapshot(),
-	)
+	response := map[string]interface{}{
+		"metrics": metrics.Snapshot(),
+		"latency": metrics.LatencyStats(),
+	}
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(
+			w,
+			"failed to encode metrics",
+			http.StatusInternalServerError,
+		)
+	}
 }
