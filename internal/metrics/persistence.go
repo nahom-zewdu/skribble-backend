@@ -37,10 +37,10 @@ func InitRedis(
 	go flushLoop()
 }
 
-// flushLoop runs an infinite loop that flushes the current metrics to Redis every 15 seconds. It uses a ticker to trigger the flush operation at regular intervals. If the Redis client is not initialized, the Flush function will simply return without doing anything.
+// flushLoop runs an infinite loop that flushes the current metrics to Redis every 30 minute. It uses a ticker to trigger the flush operation at regular intervals. If the Redis client is not initialized, the Flush function will simply return without doing anything.
 func flushLoop() {
 	ticker := time.NewTicker(
-		15 * time.Second,
+		30 * time.Minute,
 	)
 
 	defer ticker.Stop()
