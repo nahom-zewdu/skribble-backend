@@ -36,3 +36,11 @@ func IncConnections() {
 		current,
 	)
 }
+
+// DecConnections decrements the count of active connections.
+func DecConnections() {
+	atomic.AddInt64(
+		&M.ActiveConnections,
+		-1,
+	)
+}
