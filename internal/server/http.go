@@ -43,5 +43,8 @@ func (s *HTTPServer) health(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *HTTPServer) metrics(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(metrics.M)
+
+	response := map[string]interface{}{"metrics": metrics.Snapshot(), "latency": metrics.LatencyStats()}
+
+	json.NewEncoder(w).Encode(response)
 }
