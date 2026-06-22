@@ -3,6 +3,10 @@
 // It uses atomic operations to ensure thread safety when updating these metrics.
 package metrics
 
+import (
+	"sync/atomic"
+)
+
 // Metrics holds various metrics for the Skribble backend, including active connections, rooms, messages, and bytes transferred. It uses atomic operations to ensure thread safety when updating these metrics.
 type Metrics struct {
 	ActiveConnections int64
@@ -16,4 +20,19 @@ type Metrics struct {
 
 	DrawMessages int64
 	ChatMessages int64
+}
+
+var M = &Metrics{}
+
+// IncConnections increments the count of active connections and updates the peak connections if the current count exceeds the previous peak.
+func IncConnections() {
+	current := atomic.AddInt64(
+		&M.ActiveConnections,
+		1,
+	)
+
+	updatePeak(
+		&M.PeakConnections,
+		current,
+	)
 }
