@@ -14,7 +14,7 @@ import (
 func main() {
 	cfg := config.Load()
 
-	metrics.InitRedis(cfg.RedisURL, cfg.RedisToken)
+	metrics.InitRedis(cfg.RedisURL)
 
 	srv := server.NewHTTPServer(cfg)
 
