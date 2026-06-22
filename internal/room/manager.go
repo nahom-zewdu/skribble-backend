@@ -104,17 +104,16 @@ func (m *Manager) GetRoom(id string) (*Room, bool) {
 }
 
 // DELETE
-
 func (m *Manager) DeleteRoom(id string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	delete(m.rooms, id)
+	metrics.DecRooms() // Decrement the active rooms metric when a room is deleted
 	log.Printf("[room manager] Deleted room %s\n", id)
 }
 
 // ROOM CODE
-
 func generateRoomCode() string {
 	length := 6
 	b := make([]byte, length)
