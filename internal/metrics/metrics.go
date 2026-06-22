@@ -92,3 +92,26 @@ func AddMessage(size int, isDraw bool, isChat bool) {
 		)
 	}
 }
+
+// updatePeak updates the peak value if the current value exceeds the previous peak.
+// It uses atomic operations to ensure thread safety when updating the peak value.
+func updatePeak(
+	peak *int64,
+	current int64,
+) {
+	for {
+		old := atomic.LoadInt64(peak)
+
+		if current <= old {
+			return
+		}
+
+		if atomic.CompareAndSwapInt64(
+			peak,
+			old,
+			current,
+		) {
+			return
+		}
+	}
+}
