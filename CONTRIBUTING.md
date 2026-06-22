@@ -80,6 +80,8 @@ The backend separates:
 - `draw_move` — continue a stroke
 - `draw_end` — finish a stroke
 - `clear_canvas` — clear the drawing board
+- `latency` — calculated latency data
+- `ping` — health check
 
 #### Outgoing message types
 
@@ -96,6 +98,7 @@ The backend separates:
 - `drawing_timeout` — drawing time expired
 - `hint_revealed` — a letter hint was revealed
 - `draw_start`, `draw_move`, `draw_end`, `clear_canvas` — drawing broadcast events
+- `pong` — health check
 
 ## Running the project locally
 
