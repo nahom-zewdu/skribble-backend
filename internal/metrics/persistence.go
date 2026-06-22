@@ -51,18 +51,16 @@ func flushLoop() {
 }
 
 // Flush saves the current metrics to Redis. It first checks if the Redis client is initialized, and if not, it returns immediately.
-// It then takes a snapshot of the current metrics and uses a Redis transaction to set the total messages, total bytes, draw messages, and chat messages in Redis.
-// It also retrieves the current peak connections and peak rooms from Redis to compare with the current metrics.
-// If the current peak connections or peak rooms exceed the stored values in Redis, it updates those values in Redis as well.
+// It then takes a snapshot of the current metrics and uses a Redis pipeline to set multiple metric values in a single round trip.
+// If any errors occur during the flush operation, they are logged. The function also calls updatePersistentPeak to ensure that peak metrics are updated in Redis if the current values exceed the stored peaks.
 func Flush() {
-
 	if redisClient == nil {
 		return
 	}
 
 	m := Snapshot()
 
-	pipe := redisClient.TxPipeline()
+	pipe := redisClient.Pipeline()
 
 	pipe.Set(
 		ctx,
@@ -92,37 +90,66 @@ func Flush() {
 		0,
 	)
 
-	pipe.Get(ctx, "peak_connections")
-	pipe.Get(ctx, "peak_rooms")
-
-	results, err := pipe.Exec(ctx)
+	_, err := pipe.Exec(ctx)
 
 	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	storedPeakConnections, _ :=
-		results[4].(*redis.StringCmd).Int64()
-
-	storedPeakRooms, _ :=
-		results[5].(*redis.StringCmd).Int64()
-
-	if m.PeakConnections > storedPeakConnections {
-		redisClient.Set(
-			ctx,
-			"peak_connections",
-			m.PeakConnections,
-			0,
+		log.Println(
+			"metrics flush error:",
+			err,
 		)
 	}
 
-	if m.PeakRooms > storedPeakRooms {
-		redisClient.Set(
+	updatePersistentPeak(
+		"peak_connections",
+		m.PeakConnections,
+	)
+
+	updatePersistentPeak(
+		"peak_rooms",
+		m.PeakRooms,
+	)
+}
+
+// updatePersistentPeak checks if the current value of a metric exceeds the stored peak value in Redis.
+// If it does, it updates the stored peak value with the current value.
+// This function is used to ensure that the peak metrics are persisted across application restarts and reflect the highest values observed during the application's lifetime.
+func updatePersistentPeak(
+	key string,
+	current int64,
+) {
+	stored, err := redisClient.Get(
+		ctx,
+		key,
+	).Int64()
+
+	if err != nil && err != redis.Nil {
+		log.Println(
+			"peak read error:",
+			err,
+		)
+		return
+	}
+
+	if current > stored {
+		err := redisClient.Set(
 			ctx,
-			"peak_rooms",
-			m.PeakRooms,
+			key,
+			current,
 			0,
+		).Err()
+
+		if err != nil {
+			log.Println(
+				"peak write error:",
+				err,
+			)
+			return
+		}
+
+		log.Printf(
+			"%s updated: %d\n",
+			key,
+			current,
 		)
 	}
 }
