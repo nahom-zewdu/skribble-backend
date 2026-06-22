@@ -5,6 +5,7 @@ package metrics
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -96,4 +97,43 @@ func Flush() {
 	)
 
 	_, _ = pipe.Exec(ctx)
+}
+
+// Snapshot creates a copy of the current metrics by loading the values atomically.
+// This ensures that the snapshot is consistent and reflects the state of the metrics at the time it was taken.
+// The returned Metrics struct contains the current values of all the metrics, which can then be used for persistence or reporting purposes.
+func Snapshot() Metrics {
+	return Metrics{
+		ActiveConnections: atomic.LoadInt64(
+			&M.ActiveConnections,
+		),
+
+		PeakConnections: atomic.LoadInt64(
+			&M.PeakConnections,
+		),
+
+		ActiveRooms: atomic.LoadInt64(
+			&M.ActiveRooms,
+		),
+
+		PeakRooms: atomic.LoadInt64(
+			&M.PeakRooms,
+		),
+
+		TotalMessages: atomic.LoadInt64(
+			&M.TotalMessages,
+		),
+
+		TotalBytes: atomic.LoadInt64(
+			&M.TotalBytes,
+		),
+
+		DrawMessages: atomic.LoadInt64(
+			&M.DrawMessages,
+		),
+
+		ChatMessages: atomic.LoadInt64(
+			&M.ChatMessages,
+		),
+	}
 }
