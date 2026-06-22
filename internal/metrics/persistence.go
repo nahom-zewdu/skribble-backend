@@ -143,3 +143,59 @@ func Snapshot() Metrics {
 		),
 	}
 }
+
+// LoadPersisted loads the persisted metrics from Redis and updates the in-memory metrics accordingly.
+// It retrieves each metric value from Redis using the Get method and updates the corresponding fields in the Metrics struct using atomic operations to ensure thread safety.
+// If any of the keys are not found in Redis, it defaults to 0 for that metric.
+// This function is typically called during application startup to restore the metrics state from the previous run.
+func LoadPersisted() {
+
+	if redisClient == nil {
+		return
+	}
+
+	load := func(key string) int64 {
+		val, err := redisClient.Get(
+			ctx,
+			key,
+		).Int64()
+
+		if err != nil {
+			return 0
+		}
+
+		return val
+	}
+
+	atomic.StoreInt64(
+		&M.PeakConnections,
+		load("peak_connections"),
+	)
+
+	atomic.StoreInt64(
+		&M.PeakRooms,
+		load("peak_rooms"),
+	)
+
+	atomic.StoreInt64(
+		&M.TotalMessages,
+		load("total_messages"),
+	)
+
+	atomic.StoreInt64(
+		&M.TotalBytes,
+		load("total_bytes"),
+	)
+
+	atomic.StoreInt64(
+		&M.DrawMessages,
+		load("draw_messages"),
+	)
+
+	atomic.StoreInt64(
+		&M.ChatMessages,
+		load("chat_messages"),
+	)
+
+	log.Println("Loaded persisted metrics")
+}
